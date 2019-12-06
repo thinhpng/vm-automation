@@ -3,7 +3,7 @@ Python script that can be used to automate testing of software/scripts/etc on VM
 
 Both Windows and Linux are supported as host OS.
 
-# Configuration
+# Configuration / usage:
 As version 0.4 all options are set via command line arguments:
 ```
 python vm-automation.py --help                                                                                                    usage: vm-automation [-h] --vms [VMS [VMS ...]] --snapshots [SNAPSHOTS [SNAPSHOTS ...]] [--vboxmanage [VBOXMANAGE]] [--timeout [TIMEOUT]] [--hash [{1,0}]] [--links [{1,0}]]
@@ -49,8 +49,8 @@ Example:
 python vm-automation.py putty.exe --vms w10_1903_x64 w10_1903_x86 --snapshots live
 ```
 
-# Usage
-python vm-automation.py binary.exe
+
+
 
 # TODO:
 * Control how many threads run simultaneously (currently equals to the number of VMs)
