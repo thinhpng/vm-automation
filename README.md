@@ -49,12 +49,10 @@ Example:
 python vm-automation.py putty.exe --vms w10_1903_x64 w10_1903_x86 --snapshots live
 ```
 
-
-
-
 # TODO:
 * Control how many threads run simultaneously (currently equals to the number of VMs)
 * Implement some sort of the web interface (Django?)
+* VMware Workstation Pro support
 
 # Changelog
 Version 0.4:
