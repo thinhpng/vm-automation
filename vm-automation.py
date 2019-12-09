@@ -28,8 +28,8 @@ main_options.add_argument('--hash', default=1, choices=[1, 0], nargs='?',
                           help='Calculate and print hash for file (default: %(default)s)')
 main_options.add_argument('--links', default=1, choices=[1, 0], nargs='?',
                           help='Show links to VirusTotal and Google search (default: %(default)s)')
-# main_options.add_argument('--threads', default=2, type=int, nargs='?',
-#                           help='Number of threads (VMs) to start simultaneously (default: %(default)s)')
+main_options.add_argument('--threads', default=2, type=int, nargs='?',
+                          help='Not used yet')
 
 guests_options = parser.add_argument_group('Guests options')
 guests_options.add_argument('--ui', default='gui', choices=['gui', 'headless'], nargs='?',
@@ -44,9 +44,9 @@ guests_options.add_argument('--network', default='keep', choices=['on', 'off', '
                             help='State of guest OS network (default: %(default)s)')
 guests_options.add_argument('--resolution', default='1024 768 32', type=str, nargs='?',
                             help='Screen resolution for guest OS (default: %(default)s)')
-guests_options.add_argument('--pre', default=False, type=str, nargs='?',
+guests_options.add_argument('--pre', default=None, type=str, nargs='?',
                             help='Script to run before main file (default: %(default)s)')
-guests_options.add_argument('--post', default=False, type=str, nargs='?',
+guests_options.add_argument('--post', default=None, type=str, nargs='?',
                             help='Script to run after main file (default: %(default)s)')
 
 # Set options
@@ -58,7 +58,7 @@ vboxmanage_path = args.vboxmanage
 vm_ui = args.ui
 vm_login = args.login
 vm_password = args.password
-vm_remote_folder = args.remote_folder
+remote_folder = args.remote_folder
 vm_network_state = args.network
 vm_resolution = args.resolution
 vm_pre_exec = args.pre
@@ -66,7 +66,7 @@ vm_post_exec = args.post
 timeout = args.timeout
 show_hash = args.hash
 show_links = args.links
-# threads = args.threads
+threads = args.threads
 
 # Logging options
 logging.basicConfig(format='%(asctime)s [%(levelname)s] %(message)s', level=logging.DEBUG)
@@ -101,21 +101,26 @@ def process_file(file):
     time.sleep(1)
 
 
-def randomize_filename(file):
-    local_file_extension = re.findall('\\.\\w+$', file)
-    if not local_file_extension:
-        logging.debug('Unable to obtain file extension. Assuming .exe')
-        local_file_extension = '.exe'
+def randomize_filename(vm, snapshot, login, file, destination_folder):
+    # File name
     random_name = ''.join(random.choice(string.ascii_letters) for _ in range(random.randint(4, 20)))
-    if string.ascii_lowercase(vm_remote_folder) == 'desktop':
 
-    elif string.ascii_lowercase(vm_remote_folder) == 'downloads':
+    # File extension
+    file_extension = re.search('\\.\\w+$', file).group()
+    if not file_extension:
+        logging.debug(f'{vm}({snapshot}): Unable to obtain file extension. Assuming .exe')
+        file_extension = '.exe'
 
-    elif string.ascii_lowercase(vm_remote_folder) == 'temp':
-
+    # Destination folder
+    if destination_folder.lower() in ['desktop', 'downloads', 'documents']:
+        destination_folder = f'C:\\Users\\{login}\\{remote_folder}\\'
+    elif destination_folder.lower() == 'temp':
+        destination_folder = f'C:\\Users\\{login}\\AppData\\Local\\Temp\\'
     else:
+        logging.debug('Using custom remote_folder')
 
-    random_filename = vm_remote_folder + random_name + ''.join(local_file_extension)
+    random_filename = destination_folder + random_name + file_extension
+    logging.debug(f'{vm}({snapshot}): Remote file: {random_filename}')
     return random_filename
 
 
@@ -182,14 +187,14 @@ def vm_restore(vm, snapshot):
 # Change network link state
 def vm_network(vm, snapshot, link_state):
     if link_state == 'keep':
-        logging.debug(f'{vm}({snapshot}): Keeping original NIC state')
+        logging.debug(f'{vm}({snapshot}): Keeping original network state')
     elif link_state in ['on', 'off']:
         logging.info(f'{vm}({snapshot}): Setting network parameters to {link_state}')
         result = vboxmanage(f'controlvm {vm_name} setlinkstate1 {link_state}')
         if result[0] == 0:
-            logging.debug(f'{vm}({snapshot}): NIC state changed')
+            logging.debug(f'{vm}({snapshot}): Network state changed')
         else:
-            logging.error(f'{vm}({snapshot}): Unable to change NIC state. Code: {result[0]}')
+            logging.error(f'{vm}({snapshot}): Unable to change network state. Code: {result[0]}')
             logging.debug(f'{vm}({snapshot}): stderr: {result[2]}')
     else:
         logging.error(f'{vm}({snapshot}): link_state should be "on", "off" or "keep"')
@@ -295,14 +300,17 @@ def main_routine(vm, snapshot):
         vm_network(vm_name, snapshot_name, vm_network_state)
 
         # Run pre exec script
-        vm_exec(vm_name, snapshot_name, vm_login, vm_password, vm_pre_exec)
+        if vm_pre_exec:
+            vm_exec(vm_name, snapshot_name, vm_login, vm_password, vm_pre_exec)
+        else:
+            logging.debug(f'{vm}({snapshot}): Pre exec is not set')
 
         # Upload file to VM; take screenshot; start file; take screenshot; sleep 2 seconds; take screenshot;
         # wait for {timeout/2} seconds; take screenshot; wait for {timeout/2} seconds; take screenshot
-        remote_file = randomize_filename(filename)
-        vm_copyto(vm_name, snapshot_name, vm_login, vm_password, filename, remote_file)
+        random_filename = randomize_filename(vm_name, snapshot_name, vm_login, filename, remote_folder)
+        vm_copyto(vm_name, snapshot_name, vm_login, vm_password, filename, random_filename)
         screenshot = vm_screenshot(vm_name, snapshot_name)
-        vm_exec(vm_name, snapshot_name, vm_login, vm_password, remote_file)
+        vm_exec(vm_name, snapshot_name, vm_login, vm_password, random_filename)
         screenshot = vm_screenshot(vm_name, snapshot_name, screenshot)
         time.sleep(2)
         screenshot = vm_screenshot(vm_name, snapshot_name, screenshot)
@@ -312,7 +320,10 @@ def main_routine(vm, snapshot):
         vm_screenshot(vm_name, snapshot_name, screenshot)
 
         # Run post exec script
-        vm_exec(vm_name, snapshot_name, vm_login, vm_password, vm_post_exec)
+        if vm_post_exec:
+            vm_exec(vm_name, snapshot_name, vm_login, vm_password, vm_post_exec)
+        else:
+            logging.debug(f'{vm}({snapshot}): Post exec is not set')
 
         # Stop VM, restore snapshot
         vm_stop(vm_name, snapshot_name)
@@ -328,7 +339,6 @@ process_file(filename)
 
 # Start threads
 for vm_name in vms_list:
-    print(vm_name)
     t = threading.Thread(target=main_routine, args=(vm_name, snapshots_list))
     t.start()
     time.sleep(5)  # Delay before starting next VM
