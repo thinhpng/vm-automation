@@ -1,40 +1,55 @@
 # vm-automation
-Python script that can be used to test software/scripts/etc on VMs (currently only VirtualBox is supported).
+Python script that can be used to automate testing of software/scripts/etc on VMs (currently only VirtualBox is supported).
 
 Both Windows and Linux are supported as host OS.
 
-# Configuration
-* vms_list - list of VMs to use. Example: ['w10_x64', 'w10_x86', 'w81_x64', 'w81_x86', 'w7_x64', 'w7_x86']
-* snapshots_list - list of snapshots to use. Example: ['java8', 'java11', 'office2013', 'office2016', 'office2019']
-* vm_gui - start VM with GUI (vm_gui = 'gui') or without GUI (vm_gui = 'headless')
-* vboxmanage_path - path to 'vboxmanage' executable. On Windows you can leave it as-is and add VirtualBox'es folder in $PATH. Example: 'vboxmanage'
-* vm_guest_username - login for guest OS. Example: 'user'
-* vm_guest_password - password for guest OS. Example: 'P@ssw0rd'
-* remote_folder - directory, where executable is uploaded (on guest host). Example: 'C:\\\\Users\\\\user\\\\Desktop\\\\'
-* vm_network_state - option to enable (vm_network_state = 'on') or disable (vm_network_state = 'off') network on guest VM
-* vm_guest_resolution - change screen resolution on guest. Example: vm_guest_resolution = '1024 768 32'
-* preexec - application or script to run before main file. Example: preexec = 'notepad.exe'
-* postexec - application or script to run after main file. Example: postexec = 'notepad.exe'
-* timeout - global timeout for all vboxmanage commands (seconds). Example: 60
-* calculate_hash - calculate sha256 hash of file. Example: calculate_hash = 1
-* show_links - show links for VirusTotal and Google search. Example: show_links = 1
+# Configuration / usage:
+As version 0.4 all options are set via command line arguments:
 
-# Usage
-python vm-automation.py binary.exe
+Essential commands example:
+```
+python vm-automation.py putty.exe --vms w10_1903_x64 w10_1903_x86 --snapshots live
+```
+
+Extended example:
+```
+python vm-automation.py \
+    putty.exe \ 
+    --vms w10_1903_x64 w10_1903_x86 \
+    --snapshots live \
+    --vboxmanage vboxmanage \
+    --timeout 60 \
+    --hash 1 \
+    --links 1 \
+    --ui gui \
+    --login user \
+    --password 12345678 \
+    --remote_folder Desktop \
+    --network keep \
+    --resolution '1920 1080 24' \
+    --pre 'C:\Procmon\Procmon.exe /AcceptEula /Minimized /Quiet /BackingFile Procmon.pml' \
+    --post 'C:\Procmon\Procmon.exe /Terminate'
+```
 
 # TODO:
-* Control how many threads run simultaneously (currently equals to number of VMs)
+* Control how many threads run simultaneously (currently equals to the number of VMs)
+* Implement some sort of the web interface (Django?)
+* VMware Workstation Pro support
 
 # Changelog
+Version 0.4:
+* Updated to use 'argparse' to parse command-line arguments
+* All of the settings now can be configured via the command line (see '--help' or examples above)
+
 Version 0.3.1-0.3.2:
-* Optionally calculate sha256 hash of file and show links to VirusTotal and Google searches
+* Optionally calculate sha256 hash of a file and show links to VirusTotal and Google searches
 * Fix some warnings
 * Small fixes
 
 Version 0.3:
-* Added option to enable/disable network on guest
-* Added option to start scripts before/after running main file
-* Added option to change display resolution
+* Added option to enable/disable network for guest OS
+* Added option to start scripts before/after running the main file
+* Added option to change the display resolution
 * Code refactoring
 
 Version 0.2:
