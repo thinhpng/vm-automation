@@ -8,12 +8,12 @@ As version 0.4 all options are set via command line arguments:
 
 Essential commands example:
 ```
-python vm-automation.py putty.exe --vms w10_1903_x64 w10_1903_x86 --snapshots live
+python demo.py putty.exe --vms w10_1903_x64 w10_1903_x86 --snapshots live
 ```
 
 Extended example:
 ```
-python vm-automation.py \
+python demo.py \
     putty.exe \ 
     --vms w10_1903_x64 w10_1903_x86 \
     --snapshots live \
@@ -33,10 +33,15 @@ python vm-automation.py \
 
 # TODO:
 * Control how many threads run simultaneously (currently equals to the number of VMs)
-* Implement some sort of the web interface (Django?)
-* VMware Workstation Pro support
+* ? Implement web interface
+* ? VMware Workstation Pro support
 
 # Changelog
+Version 0.5:
+* All functions moved to external file
+* New functions to get information about VMs
+* Fixed logic when file was removed before execution
+
 Version 0.4:
 * Updated to use 'argparse' to parse command-line arguments
 * All of the settings now can be configured via the command line (see '--help' or examples above)
@@ -60,7 +65,13 @@ Version 0.1:
 * First public release
 
 # Example videos
-* Windows host (version 0.2):
+* Windows host (version 0.4.1):
 
 <a href="http://www.youtube.com/watch?feature=player_embedded&v=nIj4cW_miuA" target="_blank"><img src="http://img.youtube.com/vi/nIj4cW_miuA/0.jpg" width="320" height="240" border="10" /></a>
+
+# Donations
+You can support further development with a donation (Thanks!)
+
+BTC: bc1q2ywqf2pc7mak2xf24f56n9y5s6mg3rgec53y86helw8n8mcyrn0sagcfr7
+
 
