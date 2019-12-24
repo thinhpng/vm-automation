@@ -65,7 +65,7 @@ Version 0.1:
 * First public release
 
 # Example videos
-* Windows host (version 0.2):
+* Windows host (version 0.4.1):
 
 <a href="http://www.youtube.com/watch?feature=player_embedded&v=nIj4cW_miuA" target="_blank"><img src="http://img.youtube.com/vi/nIj4cW_miuA/0.jpg" width="320" height="240" border="10" /></a>
 
