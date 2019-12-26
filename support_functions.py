@@ -12,14 +12,14 @@ if __name__ == "__main__":
 
 
 # Process file
-def process_file(file):
+def process_file(file, show_hash=True, show_links=True):
     file = ''.join(file)
-    logging.info(f'File: {file}\n')
+    logging.info(f'File: {file}')
 
     # Check if file exists
     if not os.path.isfile(file):
-        logging.error('File does not exists. Exiting.')
-        exit()
+        logging.error(f'File "{file}" does not exists. Exiting.')
+        return 1
 
     # Print hash and links
     if show_hash or show_links:
@@ -36,17 +36,16 @@ def process_file(file):
         if show_links:
             logging.info(f'Search VT: https://www.virustotal.com/gui/file/{sha256sum}/detection')
             logging.info(f'Search Google: https://www.google.com/search?q={sha256sum}\n')
-    time.sleep(1)
 
 
-def randomize_filename(vm, snapshot, login, file, destination_folder):
+def randomize_filename(login, file, destination_folder):
     # File name
     random_name = ''.join(random.choice(string.ascii_letters) for _ in range(random.randint(4, 20)))
 
     # File extension
     file_extension = re.search('\\.\\w+$', file).group()
     if not file_extension:
-        logging.debug(f'{vm}({snapshot}): Unable to obtain file extension. Assuming .exe')
+        logging.debug('Unable to obtain file extension. Assuming .exe')
         file_extension = '.exe'
 
     # Destination folder
@@ -58,5 +57,5 @@ def randomize_filename(vm, snapshot, login, file, destination_folder):
         logging.debug('Using custom remote_folder')
 
     random_filename = destination_folder + random_name + file_extension
-    logging.debug(f'{vm}({snapshot}): Remote file: {random_filename}')
+    logging.debug(f'Remote file: {random_filename}')
     return random_filename

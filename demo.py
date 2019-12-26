@@ -3,14 +3,15 @@ import logging
 import threading
 import time
 
-import support_functions
-import vm_functions
+try:
+    import support_functions
+    import vm_functions
+except ModuleNotFoundError:
+    print('Unable to import support_functions and/or vm_functions')
+    exit(1)
 
-# Logging options
-logging.basicConfig(format='%(asctime)s [%(levelname)s] %(message)s', level=logging.DEBUG)
-logger = logging.getLogger('vm-automation')
 
-# Parse command line args
+# Parse command line arguments
 parser = argparse.ArgumentParser(prog='vm-automation')
 
 required_options = parser.add_argument_group('Required options')
@@ -50,27 +51,29 @@ guests_options.add_argument('--pre', default=None, type=str, nargs='?',
 guests_options.add_argument('--post', default=None, type=str, nargs='?',
                             help='Script to run after main file (default: %(default)s)')
 
-# Set options
 args = parser.parse_args()
+# Main options
 filename = args.file[0]
 vms_list = args.vms
 snapshots_list = args.snapshots
-vboxmanage_path = args.vboxmanage
-vm_ui = args.ui
+threads = args.threads
+vm_pre_exec = args.pre
+vm_post_exec = args.post
+ui = args.ui
 vm_login = args.login
 vm_password = args.password
 remote_folder = args.remote_folder
 vm_network_state = args.network
 vm_resolution = args.resolution
-vm_pre_exec = args.pre
-vm_post_exec = args.post
-timeout = args.timeout
+# support_functions options
 show_hash = args.hash
 show_links = args.links
-threads = args.threads
+# vm_functions options
+timeout = vm_functions.timeout = args.timeout
+vm_functions.vboxmanage_path = args.vboxmanage
 
 
-logging.info(f'VirtualBox version: {vm_functions.vm_version()}; Script version: 0.4.1\n')
+logging.info(f'VirtualBox version: {vm_functions.vm_version()}; Script version: 0.5\n')
 logging.info(f'VMs: {vms_list}')
 logging.info(f'Snapshots: {snapshots_list}\n')
 support_functions.process_file(filename)
@@ -79,51 +82,83 @@ support_functions.process_file(filename)
 # Main routines
 def main_routine(vm, snapshots_list):
     for snapshot in snapshots_list:
+        task_name = f'{vm}_{snapshot}'
         logging.info(f'{vm}({snapshot}): Task started')
 
         # Stop VM, restore snapshot, start VM
-        vm_functions.vm_stop(vm, snapshot)
+        vm_functions.vm_stop(vm)
         result = vm_functions.vm_restore(vm, snapshot)
         # If we were unable to restore snapshot - continue to next one
         if result != 0:
-            print('vm_restore result != 0')
-        result = vm_functions.vm_start(vm, snapshot)
+            logging.error(f'Unable to restore VM {vm} to snapshot {snapshot}. VM will be skipped.')
+            vm_functions.vm_stop(vm)
+            continue
+        result = vm_functions.vm_start(vm)
         # If we were unable to start VM - continue to next one
         if result != 0:
-            print('vm_start result != 0')
+            logging.error(f'Unable to start VM {vm}. VM will be skipped.')
+            continue
+
+        # Wait for VM
+        time.sleep(7)
 
         # Set guest resolution
-        vm_functions.vm_set_resolution(vm, snapshot, vm_resolution)
+        vm_functions.vm_set_resolution(vm, vm_resolution)
 
         # Set guest network state
-        vm_functions.vm_network(vm, snapshot, vm_network_state)
+        result = vm_functions.vm_network(vm, vm_network_state)
+        if result != 0:
+            vm_functions.vm_stop(vm)
+            continue
 
         # Run pre exec script
         if vm_pre_exec:
-            vm_functions.vm_exec(vm, snapshot, vm_login, vm_password, vm_pre_exec)
+            vm_functions.vm_exec(vm, vm_login, vm_password, vm_pre_exec)
         else:
-            logging.debug(f'{vm}({snapshot}): Pre exec is not set')
+            logging.debug('Pre exec is not set.')
 
-        # Upload file to VM; take screenshot; start file; take screenshot; sleep 2 seconds; take screenshot;
-        # wait for {timeout/2} seconds; take screenshot; wait for {timeout/2} seconds; take screenshot
-        random_filename = support_functions.randomize_filename(vm, snapshot, vm_login, filename, remote_folder)
-        vm_functions.vm_upload_exec(vm, snapshot, vm_login, vm_password, filename, random_filename)
-        screenshot = vm_functions.vm_screenshot(vm, snapshot)
-        time.sleep(2)
-        screenshot = vm_functions.vm_screenshot(vm, snapshot, screenshot)
+        # Randomize filename
+        random_filename = support_functions.randomize_filename(vm_login, filename, remote_folder)
+
+        # Upload file to VM, check if file exist and execute
+        result = vm_functions.vm_upload(vm, vm_login, vm_password, filename, random_filename)
+        if result != 0:
+            vm_functions.vm_screenshot(vm, task_name)
+            vm_functions.vm_stop(vm)
+            continue
+        vm_functions.vm_screenshot(vm, task_name)
+
+        # Check if file exist
+        result = vm_functions.vm_file_stat(vm, vm_login, vm_password, random_filename)
+        if result != 0:
+            vm_functions.vm_screenshot(vm, task_name)
+            vm_functions.vm_stop(vm)
+            continue
+        vm_functions.vm_screenshot(vm, task_name)
+
+        # Run file
+        result = vm_functions.vm_exec(vm, vm_login, vm_password, random_filename)
+        if result != 0:
+            vm_functions.vm_screenshot(vm, task_name)
+            vm_functions.vm_stop(vm)
+            continue
+
+        vm_functions.vm_screenshot(vm, task_name)
         time.sleep(timeout / 2)
-        screenshot = vm_functions.vm_screenshot(vm, snapshot, screenshot)
+        vm_functions.vm_screenshot(vm, task_name)
         time.sleep(timeout / 2)
-        screenshot = vm_functions.vm_screenshot(vm, snapshot, screenshot)
+        vm_functions.vm_screenshot(vm, task_name)
 
         # Run post exec script
         if vm_post_exec:
             vm_functions.vm_exec(vm, snapshot, vm_login, vm_password, vm_post_exec)
         else:
-            logging.debug(f'{vm}({snapshot}): Post exec is not set')
+            logging.debug('Post exec is not set.')
+
+        vm_functions.vm_screenshot(vm, task_name)
 
         # Stop VM, restore snapshot
-        vm_functions.vm_stop(vm, snapshot)
+        vm_functions.vm_stop(vm)
         vm_functions.vm_restore(vm, snapshot)
         logging.info(f'{vm}({snapshot}): Task finished')
 

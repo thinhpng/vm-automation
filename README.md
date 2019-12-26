@@ -3,6 +3,9 @@ Python script that can be used to automate testing of software/scripts/etc on VM
 
 Both Windows and Linux are supported as host OS.
 
+# Downloads
+Stable versions are available in [Releases](https://github.com/Pernat1y/vm-automation/releases)
+
 # Configuration / usage:
 As version 0.4 all options are set via command line arguments:
 
@@ -38,9 +41,10 @@ python demo.py \
 
 # Changelog
 Version 0.5:
-* All functions moved to external file
-* New functions to get information about VMs
-* Fixed logic when file was removed before execution
+* All functions moved to external files: vm_functions (all VM control functions) and support_functions (randomize filename, calculate hash and show links to Google/VT)
+* Main routine moved to file demo.py
+* New functions to get information about available VMs
+* Fixed logic when file was removed before execution - script will move on to the next task without waiting for timeout
 
 Version 0.4:
 * Updated to use 'argparse' to parse command-line arguments
@@ -48,7 +52,6 @@ Version 0.4:
 
 Version 0.3.1-0.3.2:
 * Optionally calculate sha256 hash of a file and show links to VirusTotal and Google searches
-* Fix some warnings
 * Small fixes
 
 Version 0.3:
@@ -58,20 +61,21 @@ Version 0.3:
 * Code refactoring
 
 Version 0.2:
-* Added multithreading
+* Added parallel execution of multiple VMs
 * Code refactoring
 
 Version 0.1:
 * First public release
 
 # Example videos
-* Windows host (version 0.4.1):
+* Windows host (version 0.5):
+<a href="http://www.youtube.com/watch?feature=player_embedded&v=esA5Mltsfy0" target="_blank"><img src="http://img.youtube.com/vi/esA5Mltsfy0/0.jpg" width="320" height="240" border="10" /></a>
 
-<a href="http://www.youtube.com/watch?feature=player_embedded&v=nIj4cW_miuA" target="_blank"><img src="http://img.youtube.com/vi/nIj4cW_miuA/0.jpg" width="320" height="240" border="10" /></a>
+* Linux host (version 0.2-0.3):
+<a href="http://www.youtube.com/watch?feature=player_embedded&v=pao3KihklV4" target="_blank"><img src="http://img.youtube.com/vi/pao3KihklV4/0.jpg" width="320" height="240" border="10" /></a>
 
 # Donations
 You can support further development with a donation (Thanks!)
 
 BTC: bc1q2ywqf2pc7mak2xf24f56n9y5s6mg3rgec53y86helw8n8mcyrn0sagcfr7
-
 
