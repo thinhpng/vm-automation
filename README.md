@@ -22,14 +22,13 @@ python demo.py \
     --snapshots dotnet3 dotnet4 \
     --vboxmanage vboxmanage \
     --timeout 60 \
-    --hash 1 \
-    --links 1 \
+    --info 1 \
     --ui gui \
     --login user \
     --password 12345678 \
-    --remote_folder Desktop \
+    --remote_folder desktop \
     --network keep \
-    --resolution '1920 1080 24' \
+    --resolution '1920 1080 32' \
     --pre 'C:\start.cmd' \
     --post 'C:\stop.cmd'
 ```
