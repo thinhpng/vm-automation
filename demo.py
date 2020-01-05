@@ -2,6 +2,7 @@ import argparse
 import logging
 import threading
 import time
+import random
 
 try:
     import support_functions
@@ -26,10 +27,8 @@ main_options.add_argument('--vboxmanage', default='vboxmanage', type=str, nargs=
                           help='Path to vboxmanage binary (default: %(default)s)')
 main_options.add_argument('--timeout', default=60, type=int, nargs='?',
                           help='Timeout in seconds for both commands and VM (default: %(default)s)')
-main_options.add_argument('--hash', default=1, choices=[1, 0], nargs='?',
-                          help='Calculate and print hash for file (default: %(default)s)')
-main_options.add_argument('--links', default=1, choices=[1, 0], nargs='?',
-                          help='Show links to VirusTotal and Google search (default: %(default)s)')
+main_options.add_argument('--info', default=1, choices=[1, 0], nargs='?',
+                          help='Show file hash and links to VirusTotal and Google search (default: %(default)s)')
 main_options.add_argument('--threads', default=2, type=int, nargs='?',
                           help='Not used yet')
 
@@ -40,12 +39,13 @@ guests_options.add_argument('--login', default='user', type=str, nargs='?',
                             help='Login for guest OS (default: %(default)s)')
 guests_options.add_argument('--password', default='P@ssw0rd', type=str, nargs='?',
                             help='Password for guest OS (default: %(default)s)')
-guests_options.add_argument('--remote_folder', default='Desktop', choices=['Desktop', 'Downloads', 'Temp'], type=str,
-                            nargs='?', help='Destination folder in guest OS to place file. (default: %(default)s)')
+guests_options.add_argument('--remote_folder', default='desktop', choices=['desktop', 'downloads', 'documents', 'temp'],
+                            type=str, nargs='?',
+                            help='Destination folder in guest OS to place file. (default: %(default)s)')
 guests_options.add_argument('--network', default='keep', choices=['on', 'off', 'keep'], nargs='?',
                             help='State of guest OS network (default: %(default)s)')
-guests_options.add_argument('--resolution', default='1920 1080 24', type=str, nargs='?',
-                            help='Screen resolution for guest OS (default: %(default)s)')
+guests_options.add_argument('--resolution', default='1920 1080 32', type=str, nargs='?',
+                            help='Screen resolution for guest OS. Can be set to "random" (default: %(default)s)')
 guests_options.add_argument('--pre', default=None, type=str, nargs='?',
                             help='Script to run before main file (default: %(default)s)')
 guests_options.add_argument('--post', default=None, type=str, nargs='?',
@@ -66,17 +66,18 @@ remote_folder = args.remote_folder
 vm_network_state = args.network
 vm_resolution = args.resolution
 # support_functions options
-show_hash = args.hash
-show_links = args.links
+show_info = args.info
 # vm_functions options
-timeout = vm_functions.timeout = args.timeout
+timeout = args.timeout
 vm_functions.vboxmanage_path = args.vboxmanage
 
 
-logging.info(f'VirtualBox version: {vm_functions.vm_version()}; Script version: 0.5\n')
-logging.info(f'VMs: {vms_list}')
-logging.info(f'Snapshots: {snapshots_list}\n')
-support_functions.process_file(filename)
+logging.info(f'VirtualBox version: {vm_functions.vm_version()}; Script version: 0.6')
+logging.info(f'VMs: {vms_list}; Snapshots: {snapshots_list}\n')
+result = support_functions.file_info(filename)
+if result != 0:
+    logging.error('Error while processing file. Exiting.')
+    exit(1)
 
 
 # Main routines
@@ -102,14 +103,19 @@ def main_routine(vm, snapshots_list):
         # Wait for VM
         time.sleep(7)
 
-        # Set guest resolution
-        vm_functions.vm_set_resolution(vm, vm_resolution)
-
         # Set guest network state
         result = vm_functions.vm_network(vm, vm_network_state)
         if result != 0:
             vm_functions.vm_stop(vm)
             continue
+
+        # Set guest resolution
+        if vm_resolution == 'random':
+            resolutions = ['1920 1080 32', '1920 1200 32', '2560 1440 32', '3840 2160 32']
+            random_resolution = random.choice(resolutions)
+            vm_functions.vm_set_resolution(vm, random_resolution)
+        else:
+            vm_functions.vm_set_resolution(vm, vm_resolution)
 
         # Run pre exec script
         if vm_pre_exec:
@@ -144,14 +150,16 @@ def main_routine(vm, snapshots_list):
             continue
 
         vm_functions.vm_screenshot(vm, task_name)
+        logging.debug(f'Waiting for {timeout / 2} seconds...')
         time.sleep(timeout / 2)
         vm_functions.vm_screenshot(vm, task_name)
+        logging.debug(f'Waiting for {timeout / 2} seconds...')
         time.sleep(timeout / 2)
         vm_functions.vm_screenshot(vm, task_name)
 
         # Run post exec script
         if vm_post_exec:
-            vm_functions.vm_exec(vm, snapshot, vm_login, vm_password, vm_post_exec)
+            vm_functions.vm_exec(vm, vm_login, vm_password, vm_post_exec)
         else:
             logging.debug('Post exec is not set.')
 
@@ -163,8 +171,24 @@ def main_routine(vm, snapshots_list):
         logging.info(f'{vm}({snapshot}): Task finished')
 
 
+# If vms_list is set to 'all', obtain list of all available VMs and use them
+if 'all' in vms_list:
+    vms_list = vm_functions.list_vms()
+
+if 'all' in snapshots_list:
+    snapshots_autodetect = True
+else:
+    snapshots_autodetect = False
+
 # Start threads
 for vm in vms_list:
-    t = threading.Thread(target=main_routine, args=(vm, snapshots_list))
-    t.start()
-    time.sleep(5)  # Delay before starting next VM
+    if snapshots_autodetect:
+        logging.debug('Snapshots list will be obtained from VM information.')
+        snapshots_list = vm_functions.list_snapshots(vm)
+    try:
+        t = threading.Thread(target=main_routine, args=(vm, snapshots_list))
+        t.start()
+        time.sleep(5)  # Delay before starting next VM
+    except (KeyboardInterrupt, SystemExit):
+        logging.info('Stopping threads...')
+        raise

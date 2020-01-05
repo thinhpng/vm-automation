@@ -2,6 +2,7 @@ import logging
 import subprocess
 import time
 import os
+import re
 # import multiprocessing
 
 if __name__ == "__main__":
@@ -24,20 +25,26 @@ def vboxmanage(cmd, vboxmanage_path='vboxmanage', timeout=120):
         exit(1)
 
 
-# List virtual machines
-def list_vms(state='all'):
-    if state == 'all':
-        cmd = 'list vms --sorted'
-    elif state == 'running':
-        cmd = 'list runningvms --sorted'
-    else:
-        logging.info('Unknown state selected. Assuming "all".')
-        cmd = 'list vms --sorted'
-    result = vboxmanage(cmd)
+# Return list of virtual machines
+def list_vms():
+    result = vboxmanage('list vms --sorted')
     if result[0] == 0:
-        return result[1]
+        vms_list = re.findall(r'^"(\w+)"', result[1], flags=re.MULTILINE)
+        return vms_list
     else:
         logging.error(f'Unable to get list of VMs: {result[2]}')
+        return 1
+
+
+# Return list of snapshots for specific VM
+def list_snapshots(vm):
+    result = vboxmanage(f'snapshot {vm} list --machinereadable')
+    if result[0] == 0:
+        # Convert table to list
+        snapshots_list = re.findall(r'^SnapshotName(?:-\d+)?="(\w+)"', result[1], flags=re.MULTILINE)
+        return snapshots_list
+    else:
+        logging.error(f'Unable to get list of snapshots: {result[2]}')
         return 1
 
 

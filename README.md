@@ -11,15 +11,15 @@ As version 0.4 all options are set via command line arguments:
 
 Essential commands example:
 ```
-python demo.py putty.exe --vms w10_1903_x64 w10_1903_x86 --snapshots live
+python demo.py putty.exe --vms w10_x64 w10_x86 --snapshots dotnet3 dotnet4
 ```
 
-Extended example:
+All options:
 ```
 python demo.py \
     putty.exe \ 
-    --vms w10_1903_x64 w10_1903_x86 \
-    --snapshots live \
+    --vms w10_x64 w10_x86 \
+    --snapshots dotnet3 dotnet4 \
     --vboxmanage vboxmanage \
     --timeout 60 \
     --hash 1 \
@@ -30,20 +30,27 @@ python demo.py \
     --remote_folder Desktop \
     --network keep \
     --resolution '1920 1080 24' \
-    --pre 'C:\Procmon\Procmon.exe /AcceptEula /Minimized /Quiet /BackingFile Procmon.pml' \
-    --post 'C:\Procmon\Procmon.exe /Terminate'
+    --pre 'C:\start.cmd' \
+    --post 'C:\stop.cmd'
 ```
 
 # TODO:
 * Control how many threads run simultaneously (currently equals to the number of VMs)
-* ? Implement web interface
-* ? VMware Workstation Pro support
+* Simple web interface
+* VMware Workstation Pro support (maybe)
 
 # Changelog
+Version 0.6:
+* Script now can use all available VMs ('--vms all') and snapshots ('--snapshots all'). Use with caution and make sure you have only testing VMs
+* New function to get list of snapshots for specific VM - vm_functions.list_snapshots(vm)
+* Script updated to handle keyboard interrupts (Ctrl+C)
+* Option to set random screen resolution from most common ones ('--resolution random')
+* Some tweaks and fixes
+
 Version 0.5:
 * All functions moved to external files: vm_functions (all VM control functions) and support_functions (randomize filename, calculate hash and show links to Google/VT)
 * Main routine moved to file demo.py
-* New functions to get information about available VMs
+* New function to get list of VMs - vm_functions.list_vms()
 * Fixed logic when file was removed before execution - script will move on to the next task without waiting for timeout
 
 Version 0.4:
