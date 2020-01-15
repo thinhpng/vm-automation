@@ -21,6 +21,7 @@ python demo.py \
     --vboxmanage /usr/bin/vboxmanage \
     --timeout 60 \
     --info 1 \
+    --threads 2 \
     --ui gui \
     --login user \
     --password 12345678 \
@@ -32,16 +33,14 @@ python demo.py \
 ```
 
 # TODO:
-* Control how many threads run simultaneously (currently equals to the number of VMs)
-* Simple web interface
-* Better web interface
+* Implement better web interface
 * VMware Workstation Pro support (maybe)
 
 # Changelog
 Version 0.6.1:
-* All vm_functions now return exactly 3 values: [exit_code, stdout, stderr]
-* New function to get IP addresses of guest - vm_functions.list_ips(vm)
-* Fixes for arguments parser
+* All functions now return exactly 3 values: [exit_code, stdout, stderr]
+* New function to get IP addresses of guest - vm_functions.get_ips(vm)
+* Fixes in arguments parser
 
 Version 0.6:
 * Script now can use all available VMs ('--vms all') and snapshots ('--snapshots all'). Use with caution and make sure you have only testing VMs
@@ -79,9 +78,11 @@ Version 0.1:
 
 # Example videos
 * Windows host (version 0.5):
+
 <a href="http://www.youtube.com/watch?feature=player_embedded&v=esA5Mltsfy0" target="_blank"><img src="http://img.youtube.com/vi/esA5Mltsfy0/0.jpg" width="320" height="240" border="10" /></a>
 
 * Linux host (version 0.2-0.3):
+
 <a href="http://www.youtube.com/watch?feature=player_embedded&v=pao3KihklV4" target="_blank"><img src="http://img.youtube.com/vi/pao3KihklV4/0.jpg" width="320" height="240" border="10" /></a>
 
 # Donations
