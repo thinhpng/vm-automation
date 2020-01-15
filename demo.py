@@ -27,9 +27,9 @@ main_options.add_argument('--vboxmanage', default='vboxmanage', type=str, nargs=
                           help='Path to vboxmanage binary (default: %(default)s)')
 main_options.add_argument('--timeout', default=60, type=int, nargs='?',
                           help='Timeout in seconds for both commands and VM (default: %(default)s)')
-main_options.add_argument('--info', default=1, choices=[1, 0], nargs='?',
+main_options.add_argument('--info', default=1, choices=[1, 0], type=int, nargs='?',
                           help='Show file hash and links to VirusTotal and Google search (default: %(default)s)')
-main_options.add_argument('--threads', default=2, type=int, nargs='?',
+main_options.add_argument('--threads', default=2, choices=['vms', 'cores', 1, 2, 3, 4], nargs='?',
                           help='Not used yet')
 
 guests_options = parser.add_argument_group('Guests options')
@@ -57,6 +57,7 @@ filename = args.file[0]
 vms_list = args.vms
 snapshots_list = args.snapshots
 threads = args.threads
+timeout = args.timeout
 vm_pre_exec = args.pre
 vm_post_exec = args.post
 ui = args.ui
@@ -68,13 +69,11 @@ vm_resolution = args.resolution
 # support_functions options
 show_info = args.info
 # vm_functions options
-timeout = args.timeout
 vm_functions.vboxmanage_path = args.vboxmanage
 
-
-logging.info(f'VirtualBox version: {vm_functions.vm_version()}; Script version: 0.6')
+logging.info(f'VirtualBox version: {vm_functions.vm_version()[1].rstrip()}; Script version: 0.6.1')
 logging.info(f'VMs: {vms_list}; Snapshots: {snapshots_list}\n')
-result = support_functions.file_info(filename)
+result = support_functions.file_info(filename, show_info)
 if result != 0:
     logging.error('Error while processing file. Exiting.')
     exit(1)
@@ -88,15 +87,18 @@ def main_routine(vm, snapshots_list):
 
         # Stop VM, restore snapshot, start VM
         vm_functions.vm_stop(vm)
+        time.sleep(3)
         result = vm_functions.vm_restore(vm, snapshot)
         # If we were unable to restore snapshot - continue to next one
-        if result != 0:
+        if result[0] != 0:
             logging.error(f'Unable to restore VM {vm} to snapshot {snapshot}. VM will be skipped.')
             vm_functions.vm_stop(vm)
             continue
+
+        time.sleep(3)
         result = vm_functions.vm_start(vm)
         # If we were unable to start VM - continue to next one
-        if result != 0:
+        if result[0] != 0:
             logging.error(f'Unable to start VM {vm}. VM will be skipped.')
             continue
 
@@ -105,7 +107,7 @@ def main_routine(vm, snapshots_list):
 
         # Set guest network state
         result = vm_functions.vm_network(vm, vm_network_state)
-        if result != 0:
+        if result[0] != 0:
             vm_functions.vm_stop(vm)
             continue
 
@@ -128,15 +130,15 @@ def main_routine(vm, snapshots_list):
 
         # Upload file to VM, check if file exist and execute
         result = vm_functions.vm_upload(vm, vm_login, vm_password, filename, random_filename)
-        if result != 0:
+        if result[0] != 0:
             vm_functions.vm_screenshot(vm, task_name)
             vm_functions.vm_stop(vm)
             continue
         vm_functions.vm_screenshot(vm, task_name)
 
-        # Check if file exist
+        # Check if file exist on VM
         result = vm_functions.vm_file_stat(vm, vm_login, vm_password, random_filename)
-        if result != 0:
+        if result[0] != 0:
             vm_functions.vm_screenshot(vm, task_name)
             vm_functions.vm_stop(vm)
             continue
@@ -144,7 +146,7 @@ def main_routine(vm, snapshots_list):
 
         # Run file
         result = vm_functions.vm_exec(vm, vm_login, vm_password, random_filename)
-        if result != 0:
+        if result[0] != 0:
             vm_functions.vm_screenshot(vm, task_name)
             vm_functions.vm_stop(vm)
             continue
@@ -190,5 +192,4 @@ for vm in vms_list:
         t.start()
         time.sleep(5)  # Delay before starting next VM
     except (KeyboardInterrupt, SystemExit):
-        logging.info('Stopping threads...')
         raise

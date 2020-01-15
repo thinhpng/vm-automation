@@ -1,57 +1,73 @@
 import logging
-import subprocess
-import time
 import os
 import re
-# import multiprocessing
+import subprocess
+#import multiprocessing
 
 if __name__ == "__main__":
     print('This script only contains functions and cannot be called directly. See "demo.py" for usage example.')
     exit(1)
 
 # Logging options
-logging.basicConfig(format='%(asctime)s [%(levelname)s] %(message)s', level=logging.DEBUG)
+logging.basicConfig(format='%(asctime)s [%(levelname)s] %(message)s', level=logging.INFO)
 logger = logging.getLogger('vm-automation')
 
 
 # Wrapper for vboxmanage command
 def vboxmanage(cmd, vboxmanage_path='vboxmanage', timeout=120):
     cmd = f'{vboxmanage_path} {cmd}'.split()
+    logging.debug(f'Running command: {cmd}')
     try:
         result = subprocess.run(cmd, capture_output=True, timeout=timeout, text=True)
         return result.returncode, result.stdout, result.stderr
     except FileNotFoundError:
-        logging.critical('Vboxmanage path is incorrect. Stopping.')
+        logging.critical('vboxmanage path is incorrect. Stopping.')
         exit(1)
 
 
 # Return list of virtual machines
-def list_vms():
+def list_vms(list=1):
     result = vboxmanage('list vms --sorted')
     if result[0] == 0:
-        vms_list = re.findall(r'^"(\w+)"', result[1], flags=re.MULTILINE)
-        return vms_list
+        if list:
+            vms_list = re.findall(r'^"(\w+)"', result[1], flags=re.MULTILINE)
+        else:
+            vms_list = result[1]
+        return result[0], vms_list, result[2]
     else:
         logging.error(f'Unable to get list of VMs: {result[2]}')
-        return 1
+        return result[0], result[1], result[2]
 
 
 # Return list of snapshots for specific VM
-def list_snapshots(vm):
+def list_snapshots(vm, list=1):
     result = vboxmanage(f'snapshot {vm} list --machinereadable')
     if result[0] == 0:
-        # Convert table to list
-        snapshots_list = re.findall(r'^SnapshotName(?:-\d+)?="(\w+)"', result[1], flags=re.MULTILINE)
-        return snapshots_list
+        if list:
+            snapshots_list = re.findall(r'^SnapshotName(?:-\d+)?="(\w+)"', result[1], flags=re.MULTILINE)
+        else:
+            snapshots_list = result[1]
+        return result[0], snapshots_list, result[2]
     else:
         logging.error(f'Unable to get list of snapshots: {result[2]}')
-        return 1
+        return result[0], result[1], result[2]
+
+
+# Get list of IP addresses of guest
+def list_ips(vm):
+    result = vboxmanage(f'guestproperty enumerate {vm}')
+    if result[0] == 0:
+        ips_list = re.findall(r'V4\/IP,\svalue:\s(\d+\.\d+\.\d+\.\d+),\s', result[1], flags=re.MULTILINE)
+        return result[0], ips_list, result[2]
+    else:
+        logging.error(f'Unable to get list of IP addresses: {result[2]}')
+        return result[0], result[1], result[2]
 
 
 # VirtualBox version
 def vm_version():
     result = vboxmanage('--version')
-    return result[1].rstrip()
+    return result[0], result[1], result[2]
 
 
 # Start virtual machine
@@ -65,7 +81,7 @@ def vm_start(vm, ui='gui'):
         logging.info(f'VM started')
     else:
         logging.error(f'Error while starting VM: {result[2]}')
-    return result[0]
+    return result[0], result[1], result[2]
 
 
 # Stop virtual machine
@@ -74,9 +90,9 @@ def vm_stop(vm):
     result = vboxmanage(f'controlvm {vm} poweroff')
     if result[0] == 0:
         logging.debug('VM stopped.')
-        logging.debug('VM stopped.')
     else:
         logging.error(f'Error while stopping VM: {result[2]}')
+    return result[0], result[1], result[2]
 
 
 # Restore snapshot for virtual machine
@@ -85,10 +101,9 @@ def vm_restore(vm, snapshot):
     result = vboxmanage(f'snapshot {vm} restore {snapshot}')
     if result[0] == 0:
         logging.debug('VM restored.')
-        time.sleep(3)
     else:
         logging.error(f'Error while restoring snapshot: {result[2]}.')
-    return result[0]
+    return result[0], result[1], result[2]
 
 
 # Change network link state
@@ -98,7 +113,7 @@ def vm_network(vm, link_state='keep'):
         link_state = 'keep'
     if link_state == 'keep':
         logging.debug(f'Keeping original network state for VM "{vm}".')
-        return 0
+        return 0, 0, 0
     elif link_state in ['on', 'off']:
         logging.info(f'Setting network parameters to {link_state} for VM {vm}')
         result = vboxmanage(f'controlvm {vm} setlinkstate1 {link_state}')
@@ -106,7 +121,7 @@ def vm_network(vm, link_state='keep'):
             logging.debug(f'Network state changed.')
         else:
             logging.error(f'Unable to change network state for VM: {result[2]}.')
-        return result[0]
+        return result[0], result[1], result[2]
 
 
 # Control screen resolution
@@ -117,7 +132,7 @@ def vm_set_resolution(vm, screen_resolution):
         logging.debug('Screen resolution changed.')
     else:
         logging.error(f'Unable to change screen resolution: {result[2]}')
-    return result[0]
+    return result[0], result[1], result[2]
 
 
 # Execute file/command on VM
@@ -128,7 +143,7 @@ def vm_exec(vm, username, password, remote_file):
         logging.debug('File executed successfully.')
     else:
         logging.error(f'Error while executing file: {result[2]}')
-    return result[0]
+    return result[0], result[1], result[2]
 
 
 # Get information about file on VM
@@ -139,18 +154,19 @@ def vm_file_stat(vm, username, password, remote_file):
         logging.debug('File exist.')
     else:
         logging.error(f'Error while checking for file: {result[2]}')
-    return result[0]
+    return result[0], result[1], result[2]
 
 
 # Upload file to VM
 def vm_upload(vm, username, password, local_file, remote_file):
     logging.info(f'Uploading "{local_file}" as "{remote_file}" to VM "{vm}".')
-    result = vboxmanage(f'guestcontrol {vm} --username {username} --password {password} copyto {local_file} {remote_file}')
+    result = vboxmanage(
+        f'guestcontrol {vm} --username {username} --password {password} copyto {local_file} {remote_file}')
     if result[0] == 0:
         logging.debug(f'File uploaded.')
     else:
         logging.error(f'Error while uploading file: {result[2]}')
-    return result[0]
+    return result[0], result[1], result[2]
 
 
 # Download file from VM
@@ -162,7 +178,7 @@ def vm_download(vm, username, password, local_file, remote_file):
         logging.debug(f'File downloaded.')
     else:
         logging.error(f'Error while downloading file: {result[2]}')
-    return result[0]
+    return result[0], result[1], result[2]
 
 
 # Take screenshot

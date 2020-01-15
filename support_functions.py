@@ -33,7 +33,7 @@ def file_info(file, show_info=True):
         logging.info(f'sha256: {sha256sum}')
         logging.info(f'Search VT: https://www.virustotal.com/gui/file/{sha256sum}/detection')
         logging.info(f'Search Google: https://www.google.com/search?q={sha256sum}\n')
-        return 0
+    return 0
 
 
 def randomize_filename(login, file, destination_folder):
