@@ -39,7 +39,7 @@ python demo.py \
 # Changelog
 Version 0.6.1:
 * All functions now return exactly 3 values: [exit_code, stdout, stderr]
-* New function to get IP addresses of guest - vm_functions.get_ips(vm)
+* New function to get IP addresses of guest - vm_functions.list_ips(vm)
 * Fixes in arguments parser
 
 Version 0.6:
