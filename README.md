@@ -1,5 +1,5 @@
 # vm-automation
-Python script that can be used to automate testing of software/scripts/etc on VMs (currently only VirtualBox is supported).
+Python script that can be used to automate testing of software/scripts/etc on VMs (currently only VirtualBox is supported). Based on VBoxManage command line interface and does not require VirtualBox SDK.
 
 Both Windows and Linux are supported as host OS.
 
@@ -7,9 +7,7 @@ Both Windows and Linux are supported as host OS.
 Stable versions are available in [Releases](https://github.com/Pernat1y/vm-automation/releases)
 
 # Configuration / usage:
-As version 0.4 all options are set via command line arguments:
-
-Essential commands example:
+Essential commands:
 ```
 python demo.py putty.exe --vms w10_x64 w10_x86 --snapshots dotnet3 dotnet4
 ```
@@ -20,7 +18,7 @@ python demo.py \
     putty.exe \ 
     --vms w10_x64 w10_x86 \
     --snapshots dotnet3 dotnet4 \
-    --vboxmanage vboxmanage \
+    --vboxmanage /usr/bin/vboxmanage \
     --timeout 60 \
     --info 1 \
     --ui gui \
@@ -36,9 +34,15 @@ python demo.py \
 # TODO:
 * Control how many threads run simultaneously (currently equals to the number of VMs)
 * Simple web interface
+* Better web interface
 * VMware Workstation Pro support (maybe)
 
 # Changelog
+Version 0.6.1:
+* All vm_functions now return exactly 3 values: [exit_code, stdout, stderr]
+* New function to get IP addresses of guest - vm_functions.list_ips(vm)
+* Fixes for arguments parser
+
 Version 0.6:
 * Script now can use all available VMs ('--vms all') and snapshots ('--snapshots all'). Use with caution and make sure you have only testing VMs
 * New function to get list of snapshots for specific VM - vm_functions.list_snapshots(vm)
