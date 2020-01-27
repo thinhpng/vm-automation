@@ -2,7 +2,7 @@ import logging
 import os
 import re
 import subprocess
-#import multiprocessing
+import multiprocessing
 
 if __name__ == "__main__":
     print('This script only contains functions and cannot be called directly. See "demo.py" for usage example.')
@@ -43,8 +43,8 @@ def list_vms(list=1):
 def list_snapshots(vm, list=1):
     result = vboxmanage(f'snapshot {vm} list --machinereadable')
     if result[0] == 0:
-        if list:
-            snapshots_list = re.findall(r'^SnapshotName(?:-\d+)?="(\w+)"', result[1], flags=re.MULTILINE)
+        if list == 1:
+            snapshots_list = re.findall(r'^SnapshotName(?:-\d+)?="(\S+)"', result[1], flags=re.MULTILINE)
         else:
             snapshots_list = result[1]
         return result[0], snapshots_list, result[2]
@@ -57,7 +57,7 @@ def list_snapshots(vm, list=1):
 def list_ips(vm):
     result = vboxmanage(f'guestproperty enumerate {vm}')
     if result[0] == 0:
-        ips_list = re.findall(r'V4\/IP,\svalue:\s(\d+\.\d+\.\d+\.\d+),\s', result[1], flags=re.MULTILINE)
+        ips_list = re.findall(r'V4\/IP,\svalue:\s(\d+\.\d+\.\d+\.\d+)', result[1], flags=re.MULTILINE)
         return result[0], ips_list, result[2]
     else:
         logging.error(f'Unable to get list of IP addresses: {result[2]}')

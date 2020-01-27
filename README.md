@@ -21,7 +21,6 @@ python demo.py \
     --vboxmanage /usr/bin/vboxmanage \
     --timeout 60 \
     --info 1 \
-    --threads 2 \
     --ui gui \
     --login user \
     --password 12345678 \
@@ -33,10 +32,15 @@ python demo.py \
 ```
 
 # TODO:
-* Implement better web interface
+* Implement web interface
+* Distribute workload to multiple physical hosts
+* Support for configuration files ('demo.py --config my_config')
 * VMware Workstation Pro support (maybe)
 
 # Changelog
+Version 0.6.2:
+* Bug fixes in list_snapshots() function
+
 Version 0.6.1:
 * All functions now return exactly 3 values: [exit_code, stdout, stderr]
 * New function to get IP addresses of guest - vm_functions.list_ips(vm)

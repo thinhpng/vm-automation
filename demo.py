@@ -1,8 +1,9 @@
 import argparse
 import logging
+import random
 import threading
 import time
-import random
+import multiprocessing
 
 try:
     import support_functions
@@ -187,6 +188,11 @@ for vm in vms_list:
     if snapshots_autodetect:
         logging.debug('Snapshots list will be obtained from VM information.')
         snapshots_list = vm_functions.list_snapshots(vm)
+        if snapshots_list[0] == 0:
+            snapshots_list = snapshots_list[1]
+        else:
+            logging.error(f'Unable to get list of snapshots for VM {vm}. Skipping.')
+            continue
     try:
         t = threading.Thread(target=main_routine, args=(vm, snapshots_list))
         t.start()
