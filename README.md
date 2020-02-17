@@ -46,7 +46,11 @@ python demo_cli.py \
 Version 0.7:
 * Added option to control number of concurrent tasks. Can be set to number of CPU cores ('--threads cores'), number of VMs ('--threads vms') or specific number ('--threads 2')
 * Added option to control log verbosity level ('--verbosity debug|info|error')
+* Added decorator @support_functions.suppress_error to convert error level message to debug level message.
+Use it when expecting function to throw an error.
+* Added aliases for vm_copyto() and vm_copyfrom() functions - vm_upload() and vm_download()
 * Some tweaks and fixes
+* Added unittests for most of vm_functions
 
 Version 0.6.2:
 * Bug fixes in list_snapshots() function
