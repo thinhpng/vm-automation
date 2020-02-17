@@ -9,18 +9,23 @@ Stable versions are available in [Releases](https://github.com/Pernat1y/vm-autom
 # Configuration / usage:
 Essential commands:
 ```
-python demo.py putty.exe --vms w10_x64 w10_x86 --snapshots dotnet3 dotnet4
+python demo_cli.py \
+    putty.exe \
+    --vms w10_x64 w10_x86 \
+    --snapshots live
 ```
 
 All options:
 ```
-python demo.py \
+python demo_cli.py \
     putty.exe \ 
     --vms w10_x64 w10_x86 \
-    --snapshots dotnet3 dotnet4 \
+    --snapshots snapshot1 snapshot2 \
     --vboxmanage /usr/bin/vboxmanage \
     --timeout 60 \
     --info 1 \
+    --threads 2 \
+    --verbosity info \
     --ui gui \
     --login user \
     --password 12345678 \
@@ -34,10 +39,15 @@ python demo.py \
 # TODO:
 * Implement web interface
 * Distribute workload to multiple physical hosts
-* Support for configuration files ('demo.py --config my_config')
+* Support for configuration files ('demo_cli.py --config my_config')
 * VMware Workstation Pro support (maybe)
 
 # Changelog
+Version 0.7:
+* Added option to control number of concurrent tasks. Can be set to number of CPU cores ('--threads cores'), number of VMs ('--threads vms') or specific number ('--threads 2')
+* Added option to control log verbosity level ('--verbosity debug|info|error')
+* Some tweaks and fixes
+
 Version 0.6.2:
 * Bug fixes in list_snapshots() function
 

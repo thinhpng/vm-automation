@@ -6,7 +6,7 @@ import re
 import string
 
 if __name__ == "__main__":
-    print('This script only contains functions and cannot be called directly. See "demo.py" for usage example.')
+    print('This script only contains functions and cannot be called directly. See "demo_cli.py" for usage example.')
     exit(1)
 
 
