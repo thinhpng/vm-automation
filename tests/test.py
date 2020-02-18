@@ -7,6 +7,14 @@ class TestStringMethods(unittest.TestCase):
     # Disable logging
     vm_functions.logging.disable()
 
+    def test_file_info(self):
+        result = support_functions.file_info('../putty.exe')
+        self.assertEqual(result, 0)
+
+    def test_file_info_nonexisted(self):
+        result = support_functions.file_info('nonexisted')
+        self.assertEqual(result, 1)
+
     def test_virtualbox_version(self):
         result = vm_functions.vm_version()
         self.assertEqual(result[0], 0)
@@ -29,7 +37,7 @@ class TestStringMethods(unittest.TestCase):
         result = vm_functions.vm_stop('w10_x64')
         self.assertEqual(result[0], 0)
         self.assertEqual(result[1], '')
-        self.assertEqual(result[2], '0%...10%...20%...30%...40%...50%...60%...70%...80%...90%...100%\n')
+        self.assertRegex(result[2], '100%')
 
     def test_vm_stop_stopped(self):
         result = vm_functions.vm_stop('w10_x64')
