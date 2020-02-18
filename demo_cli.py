@@ -87,9 +87,10 @@ if result != 0:
 def main_routine(vm, snapshots_list):
     for snapshot in snapshots_list:
         task_name = f'{vm}_{snapshot}'
-        logging.info(f'{vm}({snapshot}): Task started')
+        logging.info(f'{task_name}): Task started')
 
         # Stop VM, restore snapshot, start VM
+        #@support_functions.suppress_error
         vm_functions.vm_stop(vm)
         time.sleep(3)
         result = vm_functions.vm_restore(vm, snapshot)
@@ -174,7 +175,7 @@ def main_routine(vm, snapshots_list):
         # Stop VM, restore snapshot
         vm_functions.vm_stop(vm)
         vm_functions.vm_restore(vm, snapshot)
-        logging.info(f'{vm}({snapshot}): Task finished')
+        logging.info(f'{task_name}: Task finished')
 
 
 # If vms_list is set to 'all', obtain list of all available VMs and use them
@@ -204,7 +205,7 @@ for vm in vms_list:
         if snapshots_list[0] == 0:
             snapshots_list = snapshots_list[1]
         else:
-            logging.error(f'Unable to get list of snapshots for VM {vm}. Skipping.')
+            logging.error(f'Unable to get list of snapshots for VM "{vm}". Skipping.')
             continue
     try:
         t = threading.Thread(target=main_routine, args=(vm, snapshots_list))

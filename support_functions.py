@@ -57,3 +57,8 @@ def randomize_filename(login, file, destination_folder):
     random_filename = destination_folder + random_name + file_extension
     logging.debug(f'Remote file: "{random_filename}"')
     return random_filename
+
+
+def set_log_level(func):
+
+    func()

@@ -158,7 +158,7 @@ def vm_file_stat(vm, username, password, remote_file):
 
 
 # Upload file to VM
-def vm_upload(vm, username, password, local_file, remote_file):
+def vm_copyto(vm, username, password, local_file, remote_file):
     logging.info(f'Uploading "{local_file}" as "{remote_file}" to VM "{vm}".')
     result = vboxmanage(
         f'guestcontrol {vm} --username {username} --password {password} copyto {local_file} {remote_file}')
@@ -169,8 +169,13 @@ def vm_upload(vm, username, password, local_file, remote_file):
     return result[0], result[1], result[2]
 
 
+# Alias to vm_copyto()
+def vm_upload(vm, username, password, local_file, remote_file):
+    vm_copyto(vm, username, password, local_file, remote_file)
+
+
 # Download file from VM
-def vm_download(vm, username, password, local_file, remote_file):
+def vm_copyfrom(vm, username, password, local_file, remote_file):
     logging.info(f'Downloading file "{remote_file}" from VM "{vm}" as "{local_file}".')
     result = vboxmanage(
         f'guestcontrol {vm} --username {username} --password {password} copyfrom {remote_file} {local_file}')
@@ -179,6 +184,11 @@ def vm_download(vm, username, password, local_file, remote_file):
     else:
         logging.error(f'Error while downloading file: {result[2]}')
     return result[0], result[1], result[2]
+
+
+# Alias to vm_copyfrom()
+def vm_download(vm, username, password, local_file, remote_file):
+    vm_copyfrom(vm, username, password, local_file, remote_file)
 
 
 # Take screenshot
