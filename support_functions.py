@@ -6,7 +6,7 @@ import re
 import string
 
 if __name__ == "__main__":
-    print('This script only contains functions and cannot be called directly. See "demo.py" for usage example.')
+    print('This script only contains functions and cannot be called directly. See "demo_cli.py" for usage example.')
     exit(1)
 
 
@@ -57,3 +57,4 @@ def randomize_filename(login, file, destination_folder):
     random_filename = destination_folder + random_name + file_extension
     logging.debug(f'Remote file: "{random_filename}"')
     return random_filename
+

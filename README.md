@@ -6,21 +6,26 @@ Both Windows and Linux are supported as host OS.
 # Downloads
 Stable versions are available in [Releases](https://github.com/Pernat1y/vm-automation/releases)
 
-# Configuration / usage:
+# Usage:
 Essential commands:
 ```
-python demo.py putty.exe --vms w10_x64 w10_x86 --snapshots dotnet3 dotnet4
+python demo_cli.py \
+    putty.exe \
+    --vms w10_x64 w10_x86 \
+    --snapshots live
 ```
 
 All options:
 ```
-python demo.py \
+python demo_cli.py \
     putty.exe \ 
     --vms w10_x64 w10_x86 \
-    --snapshots dotnet3 dotnet4 \
+    --snapshots snapshot1 snapshot2 \
     --vboxmanage /usr/bin/vboxmanage \
     --timeout 60 \
     --info 1 \
+    --threads 2 \
+    --verbosity info \
     --ui gui \
     --login user \
     --password 12345678 \
@@ -31,13 +36,27 @@ python demo.py \
     --post 'C:\stop.cmd'
 ```
 
+# Guest configuration
+* You must have Windows as guest OS with autologin configured (or have snapshot with user logged in)
+* You must have VirtualBox guest additions installed
+* It is strongly recommended to have live snapshots to restore to (otherwise it will be *much* slower)
+
 # TODO:
 * Implement web interface
 * Distribute workload to multiple physical hosts
-* Support for configuration files ('demo.py --config my_config')
-* VMware Workstation Pro support (maybe)
+* Support for configuration files ('demo_cli.py --config my_config')
+* Option to write log to file
 
 # Changelog
+Version 0.7:
+* Added option to control number of concurrently running tasks ('--threads 2'). Set to '0' to set to number of VMs.
+* Added option to control log verbosity ('--verbosity debug|info|error').
+* Added parameter ignore_status_error to vm_stop() function. Can be used when trying to stop already stopped VM. Disabled by default.
+* Added aliases for vm_copyto() and vm_copyfrom() functions - vm_upload() and vm_download().
+* Fixed command line arguments processing
+* Added unittests for some of the functions ('tests/test.py').
+* Other minor updates for few functions
+
 Version 0.6.2:
 * Bug fixes in list_snapshots() function
 
