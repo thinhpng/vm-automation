@@ -218,7 +218,8 @@ def vm_download(vm, username, password, local_file, remote_file):
 def vm_screenshot(vm, screenshot_name):
     screenshot_index = 1
     while screenshot_index < 10000:
-        screenshot_name_num = f'{screenshot_name}_{screenshot_index}.png'
+        screenshot_index_zeros = str(screenshot_index).zfill(4)
+        screenshot_name_num = f'{screenshot_name}_{screenshot_index_zeros}.png'
         if os.path.isfile(screenshot_name_num):
             screenshot_index += 1
         else:
