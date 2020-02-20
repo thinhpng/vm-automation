@@ -53,6 +53,7 @@ Version 0.7:
 * Added option to control log verbosity ('--verbosity debug|info|error').
 * Added parameter ignore_status_error to vm_stop() function. Can be used when trying to stop already stopped VM. Disabled by default.
 * Added aliases for vm_copyto() and vm_copyfrom() functions - vm_upload() and vm_download().
+* Fixed command line arguments processing
 * Added unittests for some of the functions ('tests/test.py').
 * Other minor updates for few functions
 
