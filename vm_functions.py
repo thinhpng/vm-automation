@@ -106,8 +106,13 @@ def vm_stop(vm, ignore_status_error=0):
     return result[0], result[1], result[2]
 
 
+# Take snapshot for virtual machine
+def vm_take_snapshot(vm, snapshot):
+    pass
+
+
 # Restore snapshot for virtual machine
-def vm_restore(vm, snapshot):
+def vm_snapshot_restore(vm, snapshot):
     logging.info(f'Restoring VM "{vm}" to snapshot "{snapshot}".')
     result = vboxmanage(f'snapshot {vm} restore {snapshot}')
     if result[0] == 0:
@@ -115,6 +120,11 @@ def vm_restore(vm, snapshot):
     else:
         logging.error(f'Error while restoring snapshot: {result[2]}.')
     return result[0], result[1], result[2]
+
+
+# Remove snapshot for virtual machine
+def vm_remove_snapshot(vm, snapshot):
+    pass
 
 
 # Change network link state
@@ -221,3 +231,4 @@ def vm_screenshot(vm, screenshot_name):
     else:
         logging.error(f'Error while taking screenshot: {result[2]}')
     return result[0], result[1], result[2]
+

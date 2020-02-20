@@ -16,7 +16,7 @@ class TestStringMethods(unittest.TestCase):
         self.assertEqual(result, 1)
 
     def test_virtualbox_version(self):
-        result = vm_functions.vm_version()
+        result = vm_functions.virtualbox_version()
         self.assertEqual(result[0], 0)
         self.assertEqual(result[1], '6.1.2r135662\n')
         self.assertEqual(result[2], '')
@@ -45,20 +45,20 @@ class TestStringMethods(unittest.TestCase):
         self.assertEqual(result[1], '')
         self.assertRegex(result[2], 'Invalid machine state: PoweredOff')
 
-    def test_vm_restore_snapshot_good(self):
-        result = vm_functions.vm_restore('w10_x64', '2020-01')
+    def test_vm_snapshot_restore_good(self):
+        result = vm_functions.vm_snapshot_restore('w10_x64', 'live')
         self.assertEqual(result[0], 0)
         self.assertRegex(result[1], 'Restoring snapshot')
         self.assertRegex(result[2], '100%')
 
-    def test_vm_restore_snapshot_nonexisted1(self):
-        result = vm_functions.vm_restore('w10_x64', 'nonexisted')
+    def test_vm_snapshot_restore_nonexisted1(self):
+        result = vm_functions.vm_snapshot_restore('w10_x64', 'nonexisted')
         self.assertEqual(result[0], 1)
         self.assertEqual(result[1], '')
         self.assertRegex(result[2], 'Could not find a snapshot')
 
-    def test_vm_restore_snapshot_nonexisted2(self):
-        result = vm_functions.vm_restore('nonexisted', 'nonexisted')
+    def test_vm_snapshot_restore_nonexisted2(self):
+        result = vm_functions.vm_snapshot_restore('nonexisted', 'nonexisted')
         self.assertEqual(result[0], 1)
         self.assertEqual(result[1], '')
         self.assertRegex(result[2], 'Could not find a registered machine')

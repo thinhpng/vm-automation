@@ -90,8 +90,7 @@ def main_routine(vm, snapshots_list):
         logging.info(f'{task_name}): Task started')
 
         # Stop VM, restore snapshot, start VM
-        #@support_functions.suppress_error
-        vm_functions.vm_stop(vm)
+        vm_functions.vm_stop(vm, ignore_status_error=1)
         time.sleep(3)
         result = vm_functions.vm_restore(vm, snapshot)
         # If we were unable to restore snapshot - continue to next snapshot/VM
@@ -174,7 +173,7 @@ def main_routine(vm, snapshots_list):
 
         # Stop VM, restore snapshot
         vm_functions.vm_stop(vm)
-        vm_functions.vm_restore(vm, snapshot)
+        vm_functions.vm_snapshot_restore(vm, snapshot)
         logging.info(f'{task_name}: Task finished')
 
 
