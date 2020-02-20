@@ -2,7 +2,6 @@ import argparse
 import logging
 import random
 import time
-import multiprocessing
 import threading
 
 
@@ -63,21 +62,35 @@ vms_list = args.vms
 snapshots_list = args.snapshots
 threads = args.threads
 timeout = args.timeout
+verbosity = args.verbosity
 
 # support_functions options
 show_info = args.info
 
 # vm_functions options
 vm_functions.vboxmanage_path = args.vboxmanage
-vm_functions.verbosity = args.verbosity
+vm_functions.ui = args.ui
+vm_functions.timeout = timeout
+
+# VM options
 vm_pre_exec = args.pre
 vm_post_exec = args.post
-vm_functions.ui = args.ui
 vm_login = args.login
 vm_password = args.password
 remote_folder = args.remote_folder
 vm_network_state = args.network
 vm_resolution = args.resolution
+
+
+# Logging options
+if verbosity == 'error':
+    vm_functions.logging.basicConfig(format='%(asctime)s [%(levelname)s] %(message)s', level=logging.ERROR)
+elif verbosity == 'debug':
+    vm_functions.logging.basicConfig(format='%(asctime)s [%(levelname)s] %(message)s', level=logging.DEBUG)
+else:
+    vm_functions.logging.basicConfig(format='%(asctime)s [%(levelname)s] %(message)s', level=logging.INFO)
+vm_functions.logger = logging.getLogger('vm-automation')
+
 
 # Show info
 logging.info(f'VirtualBox version: {vm_functions.virtualbox_version(strip_newline=1)[1]}; Script version: 0.7')

@@ -7,19 +7,9 @@ if __name__ == "__main__":
     print('This script only contains functions and cannot be called directly. See "demo_cli.py" for usage example.')
     exit(1)
 
-# Logging options
-verbosity = ''
-if verbosity == 'error':
-    logging.basicConfig(format='%(asctime)s [%(levelname)s] %(message)s', level=logging.ERROR)
-elif verbosity == 'debug':
-    logging.basicConfig(format='%(asctime)s [%(levelname)s] %(message)s', level=logging.DEBUG)
-else:
-    logging.basicConfig(format='%(asctime)s [%(levelname)s] %(message)s', level=logging.INFO)
-logger = logging.getLogger('vm-automation')
-
 
 # Wrapper for vboxmanage command
-def vboxmanage(cmd, vboxmanage_path='vboxmanage', timeout=60):
+def vboxmanage(cmd):
     cmd = f'{vboxmanage_path} {cmd}'.split()
     logging.debug(f'Running command: {cmd}')
     try:
