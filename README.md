@@ -6,7 +6,7 @@ Both Windows and Linux are supported as host OS.
 # Downloads
 Stable versions are available in [Releases](https://github.com/Pernat1y/vm-automation/releases)
 
-# Configuration / usage:
+# Usage:
 Essential commands:
 ```
 python demo_cli.py \
@@ -43,14 +43,15 @@ python demo_cli.py \
 
 # Changelog
 Version 0.7:
-* Added option to control number of concurrent tasks.
+* Added option to control number of concurrently running tasks.
 Can be set to number of CPU cores ('--threads cores'), number of VMs ('--threads vms') or specific number ('--threads 2').
-* Added option to control log verbosity level ('--verbosity debug|info|error').
-* Added decorator @support_functions.suppress_error to convert error level message to debug level message.
-Use it when expecting function to throw an error.
+* Added option to control log verbosity ('--verbosity debug|info|error').
+* Added parameter ignore_status_error to vm_stop() function. Can be used when trying to stop already stopped VM.
+Example: vm_stop(vm_name, ignore_status_error=1). Disabled by default.
 * Added aliases for vm_copyto() and vm_copyfrom() functions - vm_upload() and vm_download().
 * Added unittests for some of the functions ('tests/test.py').
-* Some tweaks and fixes.
+* Fixed bug with command line options processing
+* Other minor updates for few functions
 
 Version 0.6.2:
 * Bug fixes in list_snapshots() function

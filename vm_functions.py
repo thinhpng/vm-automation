@@ -2,19 +2,24 @@ import logging
 import os
 import re
 import subprocess
-import multiprocessing
 
 if __name__ == "__main__":
     print('This script only contains functions and cannot be called directly. See "demo_cli.py" for usage example.')
     exit(1)
 
 # Logging options
-logging.basicConfig(format='%(asctime)s [%(levelname)s] %(message)s', level=logging.INFO)
+verbosity = ''
+if verbosity == 'error':
+    logging.basicConfig(format='%(asctime)s [%(levelname)s] %(message)s', level=logging.ERROR)
+elif verbosity == 'debug':
+    logging.basicConfig(format='%(asctime)s [%(levelname)s] %(message)s', level=logging.DEBUG)
+else:
+    logging.basicConfig(format='%(asctime)s [%(levelname)s] %(message)s', level=logging.INFO)
 logger = logging.getLogger('vm-automation')
 
 
 # Wrapper for vboxmanage command
-def vboxmanage(cmd, vboxmanage_path='vboxmanage', timeout=120):
+def vboxmanage(cmd, vboxmanage_path='vboxmanage', timeout=60):
     cmd = f'{vboxmanage_path} {cmd}'.split()
     logging.debug(f'Running command: {cmd}')
     try:
@@ -57,7 +62,7 @@ def list_snapshots(vm, list=1):
 def list_ips(vm):
     result = vboxmanage(f'guestproperty enumerate {vm}')
     if result[0] == 0:
-        ips_list = re.findall(r'V4\/IP,\svalue:\s(\d+\.\d+\.\d+\.\d+)', result[1], flags=re.MULTILINE)
+        ips_list = re.findall(r'V4/IP,\svalue:\s(\d+\.\d+\.\d+\.\d+)', result[1], flags=re.MULTILINE)
         return result[0], ips_list, result[2]
     else:
         logging.error(f'Unable to get list of IP addresses: {result[2]}')
@@ -65,9 +70,12 @@ def list_ips(vm):
 
 
 # VirtualBox version
-def vm_version():
+def virtualbox_version(strip_newline=0):
     result = vboxmanage('--version')
-    return result[0], result[1], result[2]
+    if strip_newline:
+        return result[0], result[1].rstrip(), result[2]
+    else:
+        return result[0], result[1], result[2]
 
 
 # Start virtual machine
@@ -85,13 +93,16 @@ def vm_start(vm, ui='gui'):
 
 
 # Stop virtual machine
-def vm_stop(vm):
+def vm_stop(vm, ignore_status_error=0):
     logging.info(f'Stopping VM "{vm}".')
     result = vboxmanage(f'controlvm {vm} poweroff')
     if result[0] == 0:
         logging.debug('VM stopped.')
     else:
-        logging.error(f'Error while stopping VM: {result[2]}')
+        if 'is not currently running' in result[2] and ignore_status_error:
+            logging.debug(f'VM already stopped: {result[2]}')
+        else:
+            logging.error(f'Error while stopping VM: {result[2]}')
     return result[0], result[1], result[2]
 
 
@@ -171,7 +182,8 @@ def vm_copyto(vm, username, password, local_file, remote_file):
 
 # Alias to vm_copyto()
 def vm_upload(vm, username, password, local_file, remote_file):
-    vm_copyto(vm, username, password, local_file, remote_file)
+    result = vm_copyto(vm, username, password, local_file, remote_file)
+    return result[0], result[1], result[2]
 
 
 # Download file from VM
@@ -188,7 +200,8 @@ def vm_copyfrom(vm, username, password, local_file, remote_file):
 
 # Alias to vm_copyfrom()
 def vm_download(vm, username, password, local_file, remote_file):
-    vm_copyfrom(vm, username, password, local_file, remote_file)
+    result = vm_copyfrom(vm, username, password, local_file, remote_file)
+    return result[0], result[1], result[2]
 
 
 # Take screenshot

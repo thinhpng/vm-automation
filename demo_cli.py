@@ -60,7 +60,7 @@ filename = args.file[0]
 vms_list = args.vms
 snapshots_list = args.snapshots
 threads = args.threads
-verbosity = args.verbosity
+vm_functions.verbosity = args.verbosity
 timeout = args.timeout
 vm_pre_exec = args.pre
 vm_post_exec = args.post
@@ -75,7 +75,7 @@ show_info = args.info
 # vm_functions options
 vm_functions.vboxmanage_path = args.vboxmanage
 
-logging.info(f'VirtualBox version: {vm_functions.vm_version()[1].rstrip()}; Script version: 0.6.1')
+logging.info(f'VirtualBox version: {vm_functions.virtualbox_version(strip_newline=1)[1]}; Script version: 0.7')
 logging.info(f'VMs: {vms_list}; Snapshots: {snapshots_list}\n')
 result = support_functions.file_info(filename, show_info)
 if result != 0:
@@ -94,7 +94,7 @@ def main_routine(vm, snapshots_list):
         vm_functions.vm_stop(vm)
         time.sleep(3)
         result = vm_functions.vm_restore(vm, snapshot)
-        # If we were unable to restore snapshot - continue to next one
+        # If we were unable to restore snapshot - continue to next snapshot/VM
         if result[0] != 0:
             logging.error(f'Unable to restore VM {vm} to snapshot {snapshot}. VM will be skipped.')
             vm_functions.vm_stop(vm)
