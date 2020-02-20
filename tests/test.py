@@ -18,7 +18,7 @@ class TestStringMethods(unittest.TestCase):
     def test_virtualbox_version(self):
         result = vm_functions.virtualbox_version()
         self.assertEqual(result[0], 0)
-        self.assertEqual(result[1], '6.1.2r135662\n')
+        self.assertEqual(result[1], '6.1.4r136177\n')
         self.assertEqual(result[2], '')
 
     def test_vm_start_good(self):

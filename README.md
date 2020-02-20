@@ -36,21 +36,24 @@ python demo_cli.py \
     --post 'C:\stop.cmd'
 ```
 
+# Guest configuration
+* You must have Windows as guest OS with autologin configured (or have snapshot with user logged in)
+* You must have VirtualBox guest additions installed
+* It is strongly recommended to have live snapshots to restore to (otherwise it will be *much* slower)
+
 # TODO:
 * Implement web interface
 * Distribute workload to multiple physical hosts
 * Support for configuration files ('demo_cli.py --config my_config')
+* Option to write log to file
 
 # Changelog
 Version 0.7:
-* Added option to control number of concurrently running tasks.
-Can be set to number of CPU cores ('--threads cores'), number of VMs ('--threads vms') or specific number ('--threads 2').
+* Added option to control number of concurrently running tasks ('--threads 2'). Set to '0' to set to number of VMs.
 * Added option to control log verbosity ('--verbosity debug|info|error').
-* Added parameter ignore_status_error to vm_stop() function. Can be used when trying to stop already stopped VM.
-Example: vm_stop(vm_name, ignore_status_error=1). Disabled by default.
+* Added parameter ignore_status_error to vm_stop() function. Can be used when trying to stop already stopped VM. Disabled by default.
 * Added aliases for vm_copyto() and vm_copyfrom() functions - vm_upload() and vm_download().
 * Added unittests for some of the functions ('tests/test.py').
-* Fixed bug with command line options processing
 * Other minor updates for few functions
 
 Version 0.6.2:

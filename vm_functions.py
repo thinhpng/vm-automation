@@ -86,9 +86,9 @@ def vm_start(vm, ui='gui'):
         ui = 'gui'
     result = vboxmanage(f'startvm {vm} --type {ui}')
     if result[0] == 0:
-        logging.info(f'VM started')
+        logging.info(f'VM {vm} started')
     else:
-        logging.error(f'Error while starting VM: {result[2]}')
+        logging.error(f'Error while starting VM "{vm}": {result[2]}')
     return result[0], result[1], result[2]
 
 
@@ -116,9 +116,9 @@ def vm_snapshot_restore(vm, snapshot):
     logging.info(f'Restoring VM "{vm}" to snapshot "{snapshot}".')
     result = vboxmanage(f'snapshot {vm} restore {snapshot}')
     if result[0] == 0:
-        logging.debug('VM restored.')
+        logging.debug(f'VM "{vm}" restored to snapshot "{snapshot}".')
     else:
-        logging.error(f'Error while restoring snapshot: {result[2]}.')
+        logging.error(f'Error while restoring VM "{vm}" to snapshot "{snapshot}": {result[2]}.')
     return result[0], result[1], result[2]
 
 

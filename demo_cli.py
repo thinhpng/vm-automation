@@ -1,15 +1,16 @@
 import argparse
 import logging
 import random
-import threading
 import time
 import multiprocessing
+import threading
+
 
 try:
     import support_functions
     import vm_functions
 except ModuleNotFoundError:
-    print('Unable to import support_functions and/or vm_functions')
+    print('Unable to import support_functions and/or vm_functions. Exiting.')
     exit(1)
 
 
@@ -26,12 +27,12 @@ required_options.add_argument('--snapshots', type=str, nargs='*', required=True,
 main_options = parser.add_argument_group('Main options')
 main_options.add_argument('--vboxmanage', default='vboxmanage', type=str, nargs='?',
                           help='Path to vboxmanage binary (default: %(default)s)')
-main_options.add_argument('--timeout', default=120, type=int, nargs='?',
+main_options.add_argument('--timeout', default=60, type=int, nargs='?',
                           help='Timeout in seconds for both commands and VM (default: %(default)s)')
 main_options.add_argument('--info', default=1, choices=[1, 0], type=int, nargs='?',
                           help='Show file hash and links to VirusTotal and Google search (default: %(default)s)')
-main_options.add_argument('--threads', default=2, choices=['vms', 'cores', 1, 2, 3, 4], nargs='?',
-                          help='Number of concurrent threads to run (default: %(default)s)')
+main_options.add_argument('--threads', default=2, choices=range(9), type=int, nargs='?',
+                          help='Number of concurrent threads to run (0=number of VMs, default: %(default)s)')
 main_options.add_argument('--verbosity', default='info', choices=['debug', 'info', 'error'], nargs='?',
                           help='Log verbosity level (default: %(default)s)')
 
@@ -55,26 +56,30 @@ guests_options.add_argument('--post', default=None, type=str, nargs='?',
                             help='Script to run after main file (default: %(default)s)')
 
 args = parser.parse_args()
+
 # Main options
 filename = args.file[0]
 vms_list = args.vms
 snapshots_list = args.snapshots
 threads = args.threads
-vm_functions.verbosity = args.verbosity
 timeout = args.timeout
+
+# support_functions options
+show_info = args.info
+
+# vm_functions options
+vm_functions.vboxmanage_path = args.vboxmanage
+vm_functions.verbosity = args.verbosity
 vm_pre_exec = args.pre
 vm_post_exec = args.post
-ui = args.ui
+vm_functions.ui = args.ui
 vm_login = args.login
 vm_password = args.password
 remote_folder = args.remote_folder
 vm_network_state = args.network
 vm_resolution = args.resolution
-# support_functions options
-show_info = args.info
-# vm_functions options
-vm_functions.vboxmanage_path = args.vboxmanage
 
+# Show info
 logging.info(f'VirtualBox version: {vm_functions.virtualbox_version(strip_newline=1)[1]}; Script version: 0.7')
 logging.info(f'VMs: {vms_list}; Snapshots: {snapshots_list}\n')
 result = support_functions.file_info(filename, show_info)
@@ -87,12 +92,12 @@ if result != 0:
 def main_routine(vm, snapshots_list):
     for snapshot in snapshots_list:
         task_name = f'{vm}_{snapshot}'
-        logging.info(f'{task_name}): Task started')
+        logging.info(f'{task_name}: Task started')
 
         # Stop VM, restore snapshot, start VM
         vm_functions.vm_stop(vm, ignore_status_error=1)
         time.sleep(3)
-        result = vm_functions.vm_restore(vm, snapshot)
+        result = vm_functions.vm_snapshot_restore(vm, snapshot)
         # If we were unable to restore snapshot - continue to next snapshot/VM
         if result[0] != 0:
             logging.error(f'Unable to restore VM {vm} to snapshot {snapshot}. VM will be skipped.')
@@ -187,17 +192,19 @@ else:
     snapshots_autodetect = False
 
 # Number of concurrent threads
-if threads == 'cores':
-    threads = multiprocessing.cpu_count()
-    logging.debug(f'Threads number is set to number of CPU cores: {threads}')
-elif threads == 'vms':
+if threads == 0:
     threads = len(vms_list)
-    logging.debug(f'Threads number is set to number of VMs: {threads}')
+    logging.debug(f'Threads count is set to number of VMs: {threads}')
 else:
-    logging.debug(f'Threads number is set to {threads}')
+    logging.debug(f'Threads count is set to {threads}')
+
 
 # Start threads
 for vm in vms_list:
+    # Limit number of concurrent threads
+    while threading.active_count() - 1 >= threads:
+        time.sleep(3)
+
     if snapshots_autodetect:
         logging.debug('Snapshots list will be obtained from VM information.')
         snapshots_list = vm_functions.list_snapshots(vm)
@@ -206,9 +213,12 @@ for vm in vms_list:
         else:
             logging.error(f'Unable to get list of snapshots for VM "{vm}". Skipping.')
             continue
+
     try:
         t = threading.Thread(target=main_routine, args=(vm, snapshots_list))
+        t.name = f'{vm}_{snapshots_list}'
         t.start()
         time.sleep(5)  # Delay before starting next VM
     except (KeyboardInterrupt, SystemExit):
         raise
+
