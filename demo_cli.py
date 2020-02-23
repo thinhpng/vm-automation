@@ -12,6 +12,7 @@ except ModuleNotFoundError:
     print('Unable to import support_functions and/or vm_functions. Exiting.')
     exit(1)
 
+script_version = '0.7.1'
 
 # Parse command line arguments
 parser = argparse.ArgumentParser(prog='vm-automation')
@@ -32,8 +33,10 @@ main_options.add_argument('--info', default=1, choices=[1, 0], type=int, nargs='
                           help='Show file hash and links to VirusTotal and Google search (default: %(default)s)')
 main_options.add_argument('--threads', default=2, choices=range(9), type=int, nargs='?',
                           help='Number of concurrent threads to run (0=number of VMs, default: %(default)s)')
-main_options.add_argument('--verbosity', default='info', choices=['debug', 'info', 'error'], nargs='?',
+main_options.add_argument('--verbosity', default='info', choices=['debug', 'info', 'error'], type=str, nargs='?',
                           help='Log verbosity level (default: %(default)s)')
+main_options.add_argument('--log', default='console', type=str, nargs='?',
+                          help='Path to log file (default: %(default)s)')
 
 guests_options = parser.add_argument_group('Guests options')
 guests_options.add_argument('--ui', default='gui', choices=['gui', 'headless'], nargs='?',
@@ -63,6 +66,7 @@ snapshots_list = args.snapshots
 threads = args.threads
 timeout = args.timeout
 verbosity = args.verbosity
+log = args.log
 
 # support_functions options
 show_info = args.info
@@ -83,18 +87,25 @@ vm_resolution = args.resolution
 
 
 # Logging options
-if verbosity == 'error':
-    vm_functions.logging.basicConfig(format='%(asctime)s [%(levelname)s] %(message)s', level=logging.ERROR)
-elif verbosity == 'debug':
-    vm_functions.logging.basicConfig(format='%(asctime)s [%(levelname)s] %(message)s', level=logging.DEBUG)
-else:
-    vm_functions.logging.basicConfig(format='%(asctime)s [%(levelname)s] %(message)s', level=logging.INFO)
-vm_functions.logger = logging.getLogger('vm-automation')
+if log == 'none':
+    logging.disable()
+elif verbosity in ['error', 'info', 'debug']:
+    log_levels = {'error': logging.ERROR,
+                  'info': logging.INFO,
+                  'debug': logging.DEBUG}
+    if log == 'console':
+        vm_functions.logging.basicConfig(format='%(asctime)s [%(levelname)s] %(message)s', level=log_levels[verbosity])
+    else:
+        vm_functions.logging.basicConfig(format='%(asctime)s [%(levelname)s] %(message)s', level=log_levels[verbosity],
+                                         filename=log, filemode='a')
+    vm_functions.logger = logging.getLogger('vm-automation')
 
 
 # Show info
-logging.info(f'VirtualBox version: {vm_functions.virtualbox_version(strip_newline=1)[1]}; Script version: 0.7')
-logging.info(f'VMs: {vms_list}; Snapshots: {snapshots_list}\n')
+logging.info(f'VirtualBox version: {vm_functions.virtualbox_version(strip_newline=1)[1]}')
+logging.info(f'Script version: {script_version}\n')
+logging.info(f'VMs: {vms_list}')
+logging.info(f'Snapshots: {snapshots_list}\n')
 result = support_functions.file_info(filename, show_info)
 if result != 0:
     logging.error('Error while processing file. Exiting.')

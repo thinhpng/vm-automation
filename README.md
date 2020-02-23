@@ -26,6 +26,7 @@ python demo_cli.py \
     --info 1 \
     --threads 2 \
     --verbosity info \
+    --log vm_automation.log \
     --ui gui \
     --login user \
     --password 12345678 \
@@ -45,9 +46,11 @@ python demo_cli.py \
 * Implement web interface
 * Distribute workload to multiple physical hosts
 * Support for configuration files ('demo_cli.py --config my_config')
-* Option to write log to file
 
 # Changelog
+Version 0.7.1:
+* Added option to redirect log to file ('--log vm_automation.log'). Default: log to console ('--log console').
+
 Version 0.7:
 * Added option to control number of concurrently running tasks ('--threads 2'). Set to '0' to set to number of VMs.
 * Added option to control log verbosity ('--verbosity debug|info|error').
