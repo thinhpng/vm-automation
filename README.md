@@ -46,7 +46,6 @@ python demo_cli.py \
 * Implement web interface
 * Distribute workload to multiple physical hosts
 * Support for configuration files ('demo_cli.py --config my_config')
-* Option to write log to file
 
 # Changelog
 Version 0.7.1:
