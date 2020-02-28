@@ -26,7 +26,7 @@ python demo_cli.py \
     --info 1 \
     --threads 2 \
     --verbosity info \
-    --log console \
+    --log vm_automation.log \
     --ui gui \
     --login user \
     --password 12345678 \
@@ -44,6 +44,7 @@ python demo_cli.py \
 
 # TODO:
 * Distribute workload to multiple physical hosts
+* Implement web interface
 * Support for configuration files ('demo_cli.py --config my_config')
 
 # Changelog
