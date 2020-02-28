@@ -1,9 +1,10 @@
 import argparse
 import logging
 import random
-import time
 import threading
+import time
 
+script_version = '0.7.2'
 
 try:
     import support_functions
@@ -11,8 +12,6 @@ try:
 except ModuleNotFoundError:
     print('Unable to import support_functions and/or vm_functions. Exiting.')
     exit(1)
-
-script_version = '0.7.1'
 
 # Parse command line arguments
 parser = argparse.ArgumentParser(prog='vm-automation')
@@ -85,7 +84,6 @@ remote_folder = args.remote_folder
 vm_network_state = args.network
 vm_resolution = args.resolution
 
-
 # Logging options
 if log == 'none':
     logging.disable()
@@ -100,10 +98,10 @@ elif verbosity in ['error', 'info', 'debug']:
                                          filename=log, filemode='a')
     vm_functions.logger = logging.getLogger('vm-automation')
 
-
 # Show info
-logging.info(f'VirtualBox version: {vm_functions.virtualbox_version(strip_newline=1)[1]}')
-logging.info(f'Script version: {script_version}\n')
+logging.info(f'Script version: {script_version}')
+logging.info(f'VirtualBox version: {vm_functions.virtualbox_version(strip_newline=1)[1]}\n')
+
 logging.info(f'VMs: {vms_list}')
 logging.info(f'Snapshots: {snapshots_list}\n')
 result = support_functions.file_info(filename, show_info)
@@ -222,7 +220,6 @@ if threads == 0:
 else:
     logging.debug(f'Threads count is set to {threads}')
 
-
 # Start threads
 for vm in vms_list:
     # Limit number of concurrent threads
@@ -245,4 +242,3 @@ for vm in vms_list:
         time.sleep(5)  # Delay before starting next VM
     except (KeyboardInterrupt, SystemExit):
         raise
-

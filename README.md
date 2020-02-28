@@ -7,7 +7,7 @@ Both Windows and Linux are supported as host OS.
 Stable versions are available in [Releases](https://github.com/Pernat1y/vm-automation/releases)
 
 # Usage:
-Essential commands:
+Essential commands (command line interface):
 ```
 python demo_cli.py \
     putty.exe \
@@ -15,7 +15,7 @@ python demo_cli.py \
     --snapshots live
 ```
 
-All options:
+All options (command line interface):
 ```
 python demo_cli.py \
     putty.exe \ 
@@ -26,7 +26,7 @@ python demo_cli.py \
     --info 1 \
     --threads 2 \
     --verbosity info \
-    --log vm_automation.log \
+    --log console \
     --ui gui \
     --login user \
     --password 12345678 \
@@ -43,11 +43,15 @@ python demo_cli.py \
 * It is strongly recommended to have live snapshots to restore to (otherwise it will be *much* slower)
 
 # TODO:
-* Implement web interface
 * Distribute workload to multiple physical hosts
 * Support for configuration files ('demo_cli.py --config my_config')
 
 # Changelog
+Version 0.7.2:
+* Added function to enumerate guest properties - vm_enumerate()
+* Updated list_ips() function
+* Added functions to control snapshots - vm_snapshot_take() and vm_snapshot_remove(). Currently not used.
+
 Version 0.7.1:
 * Added option to redirect log to file ('--log vm_automation.log'). Default: log to console ('--log console').
 
@@ -103,9 +107,9 @@ Version 0.1:
 * First public release
 
 # Example videos
-* Windows host (version 0.5):
+* Windows host (version 0.7.2):
 
-<a href="http://www.youtube.com/watch?feature=player_embedded&v=esA5Mltsfy0" target="_blank"><img src="http://img.youtube.com/vi/esA5Mltsfy0/0.jpg" width="320" height="240" border="10" /></a>
+<a href="http://www.youtube.com/watch?feature=player_embedded&v=t6AWew06rxo" target="_blank"><img src="http://img.youtube.com/vi/t6AWew06rxo/0.jpg" width="320" height="240" border="10" /></a>
 
 * Linux host (version 0.2-0.3):
 

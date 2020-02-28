@@ -4,8 +4,10 @@ import unittest
 
 
 class TestStringMethods(unittest.TestCase):
-    # Disable logging
+    # vm_functions options
     vm_functions.logging.disable()
+    vm_functions.vboxmanage_path = 'vboxmanage'
+    vm_functions.timeout = 60
 
     def test_file_info(self):
         result = support_functions.file_info('../putty.exe')
@@ -27,7 +29,7 @@ class TestStringMethods(unittest.TestCase):
         self.assertRegex(result[1], 'VM "w10_x64" has been successfully started.')
         self.assertEqual(result[2], '')
 
-    def test_vm_start_nonexisted(self):
+    def test_vm_start_nonexisting(self):
         result = vm_functions.vm_start('nonexisted')
         self.assertEqual(result[0], 1)
         self.assertEqual(result[1], '')
@@ -51,17 +53,23 @@ class TestStringMethods(unittest.TestCase):
         self.assertRegex(result[1], 'Restoring snapshot')
         self.assertRegex(result[2], '100%')
 
-    def test_vm_snapshot_restore_nonexisted1(self):
+    def test_vm_snapshot_restore_nonexisting1(self):
         result = vm_functions.vm_snapshot_restore('w10_x64', 'nonexisted')
         self.assertEqual(result[0], 1)
         self.assertEqual(result[1], '')
         self.assertRegex(result[2], 'Could not find a snapshot')
 
-    def test_vm_snapshot_restore_nonexisted2(self):
+    def test_vm_snapshot_restore_nonexisting2(self):
         result = vm_functions.vm_snapshot_restore('nonexisted', 'nonexisted')
         self.assertEqual(result[0], 1)
         self.assertEqual(result[1], '')
         self.assertRegex(result[2], 'Could not find a registered machine')
+
+    def test_list_ips(self):
+        result = vm_functions.list_ips('w10_x64')
+        self.assertEqual(result[0], 0)
+        self.assertEqual(result[1], ['172.22.90.227'])
+        self.assertEqual(result[2], '')
 
 
 if __name__ == '__main__':
