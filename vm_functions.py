@@ -48,17 +48,6 @@ def list_snapshots(vm, list=1):
         return result[0], result[1], result[2]
 
 
-# Get list of IP addresses of guest
-def list_ips(vm):
-    result = vboxmanage(f'guestproperty enumerate {vm}')
-    if result[0] == 0:
-        ips_list = re.findall(r'V4/IP,\svalue:\s(\d+\.\d+\.\d+\.\d+)', result[1], flags=re.MULTILINE)
-        return result[0], ips_list, result[2]
-    else:
-        logging.error(f'Unable to get list of IP addresses: {result[2]}')
-        return result[0], result[1], result[2]
-
-
 # VirtualBox version
 def virtualbox_version(strip_newline=0):
     result = vboxmanage('--version')
@@ -96,9 +85,43 @@ def vm_stop(vm, ignore_status_error=0):
     return result[0], result[1], result[2]
 
 
+# Enumerate guest properties
+def vm_enumerate(vm, pattern=None):
+    logging.debug(f'Enumerating VM "{vm}" guest properties.')
+    if pattern:
+        result = vboxmanage(f'guestproperty enumerate {vm} --pattern {pattern}')
+    else:
+        result = vboxmanage(f'guestproperty enumerate {vm}')
+    if result[0] == 0:
+        logging.debug('VM properties enumerated.')
+    else:
+        logging.error(f'Error while enumerating guest properties: {result[2]}')
+    return result[0], result[1], result[2]
+
+
+# Get list of IP addresses of guest
+def list_ips(vm):
+    result = vm_enumerate(vm, pattern='/VirtualBox/GuestInfo/Net/*/V4/IP')
+    if result[0] == 0:
+        ips_list = re.findall(r'value:\s(\d+\.\d+\.\d+\.\d+)', result[1], flags=re.MULTILINE)
+        return result[0], ips_list, result[2]
+    else:
+        logging.error(f'Unable to get list of IP addresses: {result[2]}')
+        return result[0], result[1], result[2]
+
+
 # Take snapshot for virtual machine
-def vm_take_snapshot(vm, snapshot):
-    pass
+def vm_snapshot_take(vm, snapshot, live=0):
+    logging.info(f'Taking snapshot "{snapshot}" for VM "{vm}"')
+    if live:
+        result = vboxmanage(f'snapshot {vm} take {snapshot}')
+    else:
+        result = vboxmanage(f'snapshot {vm} take {snapshot} --live')
+    if result[0] == 0:
+        logging.debug('Snapshot created.')
+    else:
+        logging.error(f'Error while creating snapshot: {result[2]}')
+    return result[0], result[1], result[2]
 
 
 # Restore snapshot for virtual machine
@@ -113,8 +136,14 @@ def vm_snapshot_restore(vm, snapshot):
 
 
 # Remove snapshot for virtual machine
-def vm_remove_snapshot(vm, snapshot):
-    pass
+def vm_snapshot_remove(vm, snapshot):
+    logging.info(f'Removing snapshot "{snapshot}" for VM "{vm}"')
+    result = vboxmanage(f'snapshot {vm} delete {snapshot}')
+    if result[0] == 0:
+        logging.debug('Snapshot removed.')
+    else:
+        logging.error(f'Error while removing snapshot: {result[2]}')
+    return result[0], result[1], result[2]
 
 
 # Change network link state
