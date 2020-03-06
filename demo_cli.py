@@ -4,7 +4,7 @@ import random
 import threading
 import time
 
-script_version = '0.7.2'
+script_version = '0.7.3'
 
 try:
     import support_functions
@@ -19,7 +19,9 @@ parser = argparse.ArgumentParser(prog='vm-automation')
 required_options = parser.add_argument_group('Required options')
 required_options.add_argument('file', type=str, nargs='+', help='Path to file')
 required_options.add_argument('--vms', type=str, nargs='*', required=True,
-                              help='Space-separated list of virtual machines to use')
+                              help='Space-separated list of VMs to use')
+required_options.add_argument('--vms_group', type=str, nargs='*', required=True,
+                              help='Group of VMs to use')
 required_options.add_argument('--snapshots', type=str, nargs='*', required=True,
                               help='Space-separated list of snapshots to use')
 

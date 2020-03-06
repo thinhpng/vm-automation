@@ -2,22 +2,50 @@ import logging
 import os
 import re
 import subprocess
+import urllib.request
 
 if __name__ == "__main__":
     print('This script only contains functions and cannot be called directly. See "demo_cli.py" for usage example.')
     exit(1)
 
 
+# Set essential options
+latest_version_url = 'https://download.virtualbox.org/virtualbox/LATEST.TXT'
+if 'vboxmanage_path' not in locals():
+    vboxmanage_path = 'vboxmanage'
+if 'timeout' not in locals():
+    timeout = 60
+
+
 # Wrapper for vboxmanage command
 def vboxmanage(cmd):
     cmd = f'{vboxmanage_path} {cmd}'.split()
-    logging.debug(f'Running command: {cmd}')
+    logging.debug(f'''Running command: {vboxmanage_path} {' '.join(cmd)}''')
     try:
         result = subprocess.run(cmd, capture_output=True, timeout=timeout, text=True)
         return result.returncode, result.stdout, result.stderr
     except FileNotFoundError:
         logging.critical('vboxmanage path is incorrect. Stopping.')
         exit(1)
+
+
+# VirtualBox version
+def virtualbox_version(strip_newline=0, online_check=0):
+    result = vboxmanage('--version')
+    vb_version = re.search(r'^(\d+\.\d+\.\d+)r', result[1], flags=re.MULTILINE)
+    if online_check:
+        print('Checking VirtualBox version.')
+        logging.debug('Checking VirtualBox version.')
+        latest_version = urllib.request.urlopen(latest_version_url)
+        if latest_version.status == 200:
+            latest_version = latest_version.read(16).decode('utf-8')
+            logging.info(f'Latest VirtualBox version: {latest_version}')
+        else:
+            logging.error(f'Error while reading latest version: {latest_version.status}.')
+    if strip_newline:
+        return result[0], vb_version, result[2]
+    else:
+        return result[0], result[1], result[2]
 
 
 # Return list of virtual machines
@@ -45,15 +73,6 @@ def list_snapshots(vm, list=1):
         return result[0], snapshots_list, result[2]
     else:
         logging.error(f'Unable to get list of snapshots: {result[2]}')
-        return result[0], result[1], result[2]
-
-
-# VirtualBox version
-def virtualbox_version(strip_newline=0):
-    result = vboxmanage('--version')
-    if strip_newline:
-        return result[0], result[1].rstrip(), result[2]
-    else:
         return result[0], result[1], result[2]
 
 
@@ -252,3 +271,19 @@ def vm_screenshot(vm, screenshot_name):
         logging.error(f'Error while taking screenshot: {result[2]}')
     return result[0], result[1], result[2]
 
+
+# Import VM
+def vm_import(vm_file, vm=None):
+    if vm:
+        logging.info(f'Importing file "{vm_file}" as "{vm}".')
+    else:
+        logging.info(f'Importing file "{vm_file}".')
+    result = vboxmanage(f'import {vm}')
+    return result[0], result[1], result[2]
+
+
+# Export VM
+def vm_export(vm_file, vm=None):
+    logging.info(f'Exporting VM "{vm}" as {vm_file}.')
+    result = vboxmanage(f'export {vm}')
+    return result[0], result[1], result[2]

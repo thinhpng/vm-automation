@@ -35,6 +35,42 @@ class TestStringMethods(unittest.TestCase):
         self.assertEqual(result[1], '')
         self.assertRegex(result[2], 'Could not find a registered machine')
 
+    # def test_vm_upload(self):
+    #     result = vm_functions.vm_upload('w10_x64', 'addm', 'P@ssw0rd', '../putty.exe', 'C:\\putty.exe')
+    #     self.assertEqual(result[0], 0)
+    #     self.assertEqual(result[1], '')
+    #     self.assertEqual(result[2], '')
+    #
+    # def test_vm_upload_nonexisting_file(self):
+    #     result = vm_functions.vm_upload('w10_x64', 'username', 'P@ssw0rd', 'nonexisting.file', 'C:\\putty.exe')
+    #     self.assertEqual(result[0], 1)
+    #     self.assertEqual(result[1], '')
+    #     self.assertEqual(result[2], '')
+    #
+    # def test_vm_upload_incorrect_credentials(self):
+    #     result = vm_functions.vm_upload('w10_x64', 'nonexisting_user', 'P@ssw0rd', '../putty.exe', 'C:\\putty.exe')
+    #     self.assertEqual(result[0], 1)
+    #     self.assertEqual(result[1], '')
+    #     self.assertEqual(result[2], '')
+    #
+    # def test_vm_download(self):
+    #     result = vm_functions.vm_download('w10_x64', 'addm', 'P@ssw0rd', '../putty.exe', 'C:\\putty.exe')
+    #     self.assertEqual(result[0], 0)
+    #     self.assertEqual(result[1], '')
+    #     self.assertEqual(result[2], '')
+    #
+    # def test_vm_download_incorrect_credentials(self):
+    #     result = vm_functions.vm_download('w10_x64', 'nonexisting_user', 'P@ssw0rd', '../putty.exe', 'C:\\putty.exe')
+    #     self.assertEqual(result[0], 1)
+    #     self.assertEqual(result[1], '')
+    #     self.assertEqual(result[2], '')
+    #
+    # def test_vm_download_nonexisting_file(self):
+    #     result = vm_functions.vm_download('w10_x64', 'user', 'P@ssw0rd', 'nonexisting.file', '../putty.exe')
+    #     self.assertEqual(result[0], 1)
+    #     self.assertEqual(result[1], '')
+    #     self.assertEqual(result[2], '')
+
     def test_vm_stop_running(self):
         result = vm_functions.vm_stop('w10_x64')
         self.assertEqual(result[0], 0)
