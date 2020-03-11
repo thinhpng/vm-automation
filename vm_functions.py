@@ -15,8 +15,13 @@ if 'timeout' not in locals():
     timeout = 60
 
 
-# Wrapper for vboxmanage command
 def vboxmanage(cmd, timeout=timeout):
+    """Wrapper for "VBoxManage" command
+
+    :param cmd: Command to run.
+    :param timeout: Timeout for operation, seconds.
+    :return: returncode, stdout, stderr.
+    """
     cmd = f'{vboxmanage_path} {cmd}'.split()
     logging.debug(f'''Running command: {vboxmanage_path} {' '.join(cmd)}''')
     try:
@@ -27,8 +32,12 @@ def vboxmanage(cmd, timeout=timeout):
         exit(1)
 
 
-# VirtualBox version
 def virtualbox_version(strip_newline=0):
+    """Return VirtualBox version
+
+    :param strip_newline: Strip new line from stdout.
+    :return: returncode, stdout, stderr.
+    """
     result = vboxmanage('--version')
     if strip_newline:
         return result[0], result[1].rstrip(), result[2]
@@ -36,8 +45,12 @@ def virtualbox_version(strip_newline=0):
         return result[0], result[1], result[2]
 
 
-# Return list of virtual machines
 def list_vms(list=1):
+    """Return list of virtual machines
+
+    :param list: Return stdout as a list.
+    :return: returncode, stdout, stderr.
+    """
     result = vboxmanage('list vms --sorted')
     if result[0] == 0:
         if list:
@@ -50,8 +63,13 @@ def list_vms(list=1):
         return result[0], result[1], result[2]
 
 
-# Return list of snapshots for specific VM
 def list_snapshots(vm, list=1):
+    """Return list of snapshots for specific virtual machine
+
+    :param vm: Virtual machine name.
+    :param list: Return stdout as a list.
+    :return: returncode, stdout, stderr.
+    """
     result = vboxmanage(f'snapshot {vm} list --machinereadable')
     if result[0] == 0:
         if list == 1:
@@ -64,8 +82,13 @@ def list_snapshots(vm, list=1):
         return result[0], result[1], result[2]
 
 
-# Start virtual machine
 def vm_start(vm, ui='gui'):
+    """Start virtual machine
+
+    :param vm: Virtual machine name.
+    :param ui: Start virtual machine with or without GUI.
+    :return: returncode, stdout, stderr.
+    """
     ui = ui.lower()
     logging.info(f'Starting VM "{vm}".')
     if ui not in ['gui', 'sdl', 'headless', 'separate']:
@@ -79,8 +102,13 @@ def vm_start(vm, ui='gui'):
     return result[0], result[1], result[2]
 
 
-# Stop virtual machine
 def vm_stop(vm, ignore_status_error=0):
+    """Stop virtual machine
+
+    :param vm: Virtual machine name.
+    :param ignore_status_error: If errors should be ignored.
+    :return: returncode, stdout, stderr.
+    """
     logging.info(f'Stopping VM "{vm}".')
     result = vboxmanage(f'controlvm {vm} poweroff')
     if result[0] == 0:
@@ -93,8 +121,13 @@ def vm_stop(vm, ignore_status_error=0):
     return result[0], result[1], result[2]
 
 
-# Enumerate guest properties
 def vm_enumerate(vm, pattern=None):
+    """Enumerate virtual machine properties
+
+    :param vm: Virtual machine name.
+    :param pattern: Pattern for virtual machine properties.
+    :return: returncode, stdout, stderr.
+    """
     logging.debug(f'Enumerating VM "{vm}" guest properties.')
     if pattern:
         result = vboxmanage(f'guestproperty enumerate {vm} --pattern {pattern}')
@@ -107,8 +140,12 @@ def vm_enumerate(vm, pattern=None):
     return result[0], result[1], result[2]
 
 
-# Get list of IP addresses of guest
 def list_ips(vm):
+    """Get list of IP addresses of guest
+
+    :param vm: Virtual machine name.
+    :return: returncode, stdout, stderr.
+    """
     result = vm_enumerate(vm, pattern='/VirtualBox/GuestInfo/Net/*/V4/IP')
     if result[0] == 0:
         ips_list = re.findall(r'value:\s(\d+\.\d+\.\d+\.\d+)', result[1], flags=re.MULTILINE)
@@ -118,8 +155,14 @@ def list_ips(vm):
         return result[0], result[1], result[2]
 
 
-# Take snapshot for virtual machine
 def vm_snapshot_take(vm, snapshot, live=0):
+    """Take snapshot for virtual machine
+
+    :param vm: Virtual machine name.
+    :param snapshot: Snapshot name.
+    :param live: Take a live snapshot.
+    :return: returncode, stdout, stderr.
+    """
     logging.info(f'Taking snapshot "{snapshot}" for VM "{vm}"')
     if live:
         result = vboxmanage(f'snapshot {vm} take {snapshot}')
@@ -132,8 +175,13 @@ def vm_snapshot_take(vm, snapshot, live=0):
     return result[0], result[1], result[2]
 
 
-# Restore snapshot for virtual machine
 def vm_snapshot_restore(vm, snapshot):
+    """Restore snapshot for virtual machine
+
+    :param vm: Virtual machine name.
+    :param snapshot: Snapshot name.
+    :return: returncode, stdout, stderr.
+    """
     logging.info(f'Restoring VM "{vm}" to snapshot "{snapshot}".')
     result = vboxmanage(f'snapshot {vm} restore {snapshot}')
     if result[0] == 0:
@@ -143,8 +191,13 @@ def vm_snapshot_restore(vm, snapshot):
     return result[0], result[1], result[2]
 
 
-# Remove snapshot for virtual machine
 def vm_snapshot_remove(vm, snapshot):
+    """Remove snapshot for virtual machine
+
+    :param vm: Virtual machine name.
+    :param snapshot: Snapshot name.
+    :return: returncode, stdout, stderr.
+    """
     logging.info(f'Removing snapshot "{snapshot}" for VM "{vm}"')
     result = vboxmanage(f'snapshot {vm} delete {snapshot}')
     if result[0] == 0:
@@ -154,8 +207,13 @@ def vm_snapshot_remove(vm, snapshot):
     return result[0], result[1], result[2]
 
 
-# Change network link state
 def vm_network(vm, link_state='keep'):
+    """Change guest OS network link state
+
+    :param vm: Virtual machine name.
+    :param link_state: Guest OS network link state.
+    :return: returncode, stdout, stderr.
+    """
     if link_state not in ['keep', 'on', 'off']:
         logging.info(f'Unknown link_state selected for VM {vm}. Assuming "keep".')
         link_state = 'keep'
@@ -172,8 +230,13 @@ def vm_network(vm, link_state='keep'):
         return result[0], result[1], result[2]
 
 
-# Control screen resolution
 def vm_set_resolution(vm, screen_resolution):
+    """Control guest OS screen resolution
+
+    :param vm: Virtual machine name.
+    :param screen_resolution: Guest OS screen resolution (W H D).
+    :return: returncode, stdout, stderr.
+    """
     logging.info(f'Changing screen resolution for VM "{vm}".')
     result = vboxmanage(f'controlvm {vm} setvideomodehint {screen_resolution}')
     if result[0] == 0:
@@ -183,8 +246,15 @@ def vm_set_resolution(vm, screen_resolution):
     return result[0], result[1], result[2]
 
 
-# Execute file/command on VM
 def vm_exec(vm, username, password, remote_file):
+    """Execute file/command on guest OS
+
+    :param vm: Virtual machine name.
+    :param username: Guest OS username (login).
+    :param password: Guest OS password.
+    :param remote_file: Path to file on guest OS.
+    :return: returncode, stdout, stderr.
+    """
     logging.info(f'{vm}: Executing file "{remote_file}" on VM "{vm}".')
     result = vboxmanage(f'guestcontrol {vm} --username {username} --password {password} start {remote_file}')
     if result[0] == 0:
@@ -194,8 +264,15 @@ def vm_exec(vm, username, password, remote_file):
     return result[0], result[1], result[2]
 
 
-# Get information about file on VM
 def vm_file_stat(vm, username, password, remote_file):
+    """Get information about file on guest OS
+
+    :param vm: Virtual machine name.
+    :param username: Guest OS username (login).
+    :param password: Guest OS password.
+    :param remote_file: Path to file on guest OS.
+    :return: returncode, stdout, stderr.
+    """
     logging.info(f'Checking if file "{remote_file}" exist on VM "{vm}".')
     result = vboxmanage(f'guestcontrol {vm} --username {username} --password {password} stat {remote_file}')
     if result[0] == 0:
@@ -205,8 +282,16 @@ def vm_file_stat(vm, username, password, remote_file):
     return result[0], result[1], result[2]
 
 
-# Upload file to VM
 def vm_copyto(vm, username, password, local_file, remote_file):
+    """Upload file to virtual machine
+
+    :param vm: Virtual machine name.
+    :param username: Guest OS username (login).
+    :param password: Guest OS password.
+    :param local_file: Path to local file on host OS.
+    :param remote_file: Path to file on guest OS.
+    :return: returncode, stdout, stderr.
+    """
     logging.info(f'Uploading "{local_file}" as "{remote_file}" to VM "{vm}".')
     result = vboxmanage(
         f'guestcontrol {vm} --username {username} --password {password} copyto {local_file} {remote_file}')
@@ -219,12 +304,29 @@ def vm_copyto(vm, username, password, local_file, remote_file):
 
 # Alias to vm_copyto()
 def vm_upload(vm, username, password, local_file, remote_file):
+    """Upload file to virtual machine
+
+    :param vm: Virtual machine name.
+    :param username: Guest OS username (login).
+    :param password: Guest OS password.
+    :param local_file: Path to local file on host OS.
+    :param remote_file: Path to file on guest OS.
+    :return: returncode, stdout, stderr.
+    """
     result = vm_copyto(vm, username, password, local_file, remote_file)
     return result[0], result[1], result[2]
 
 
-# Download file from VM
 def vm_copyfrom(vm, username, password, local_file, remote_file):
+    """Download file from virtual machine
+
+    :param vm: Virtual machine name.
+    :param username: Guest OS username (login).
+    :param password: Guest OS password.
+    :param local_file: Path to local file on host OS.
+    :param remote_file: Path to file on guest OS.
+    :return: returncode, stdout, stderr.
+    """
     logging.info(f'Downloading file "{remote_file}" from VM "{vm}" as "{local_file}".')
     result = vboxmanage(
         f'guestcontrol {vm} --username {username} --password {password} copyfrom {remote_file} {local_file}')
@@ -237,12 +339,26 @@ def vm_copyfrom(vm, username, password, local_file, remote_file):
 
 # Alias to vm_copyfrom()
 def vm_download(vm, username, password, local_file, remote_file):
+    """Download file from virtual machine
+
+    :param vm: Virtual machine name.
+    :param username: Guest OS username (login).
+    :param password: Guest OS password.
+    :param local_file: Path to local file on host OS.
+    :param remote_file: Path to file on guest OS.
+    :return: returncode, stdout, stderr.
+    """
     result = vm_copyfrom(vm, username, password, local_file, remote_file)
     return result[0], result[1], result[2]
 
 
-# Take screenshot
 def vm_screenshot(vm, screenshot_name):
+    """Take screenshot from guest OS
+
+    :param vm: Virtual machine name.
+    :param screenshot_name: Name of file to save screenshot as.
+    :return: returncode, stdout, stderr.
+    """
     screenshot_index = 1
     while screenshot_index < 10000:
         screenshot_index_zeros = str(screenshot_index).zfill(4)
@@ -251,7 +367,6 @@ def vm_screenshot(vm, screenshot_name):
             screenshot_index += 1
         else:
             break
-
     logging.info(f'Taking screenshot "{screenshot_name_num}" on VM "{vm}".')
     result = vboxmanage(f'controlvm {vm} screenshotpng {screenshot_name_num}')
     if result[0] == 0:
@@ -261,8 +376,15 @@ def vm_screenshot(vm, screenshot_name):
     return result[0], result[1], result[2]
 
 
-# Import VM
 def vm_import(vm, vm_file, preview=0, timeout=600):
+    """Import virtual machine from file
+
+    :param vm: Virtual machine name.
+    :param vm_file: Path to input file.
+    :param preview: Only preview (no actual import).
+    :param timeout: Timeout for operation, seconds.
+    :return: returncode, stdout, stderr.
+    """
     if preview:
         logging.info(f'Importing file {vm_file} in preview mode.')
         options = '--dry-run'
@@ -276,8 +398,15 @@ def vm_import(vm, vm_file, preview=0, timeout=600):
     return result[0], result[1], result[2]
 
 
-# Export VM
 def vm_export(vm, vm_file, file_format='ovf20', timeout=600):
+    """Export virtual machine to file
+
+    :param vm: Virtual machine name.
+    :param vm_file: Path to output file.
+    :param file_format: Format for output file.
+    :param timeout: Timeout for operation, seconds.
+    :return: returncode, stdout, stderr.
+    """
     if file_format not in ['legacy09', 'ovf09', 'ovf10', 'ovf20', 'opc10']:
         logging.error('Unknown file format. Exiting.')
         exit()

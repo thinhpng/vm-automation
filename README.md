@@ -57,6 +57,7 @@ python demo_cli.py \
 
 # Changelog
 Version 0.7.3:
+* Docstring added for all the functions (Sphinx format). Usage: help(function_name).
 * Added functions to export and import VMs - vm_export() and vm_import(). Have separate timeout settings as operations are time consuming.
 
 Version 0.7.2:
