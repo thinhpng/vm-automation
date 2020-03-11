@@ -2,7 +2,6 @@ import logging
 import os
 import re
 import subprocess
-import urllib.request
 
 if __name__ == "__main__":
     print('This script only contains functions and cannot be called directly. See "demo_cli.py" for usage example.')
@@ -10,7 +9,6 @@ if __name__ == "__main__":
 
 
 # Set essential options
-latest_version_url = 'https://download.virtualbox.org/virtualbox/LATEST.TXT'
 if 'vboxmanage_path' not in locals():
     vboxmanage_path = 'vboxmanage'
 if 'timeout' not in locals():
@@ -18,7 +16,7 @@ if 'timeout' not in locals():
 
 
 # Wrapper for vboxmanage command
-def vboxmanage(cmd):
+def vboxmanage(cmd, timeout=timeout):
     cmd = f'{vboxmanage_path} {cmd}'.split()
     logging.debug(f'''Running command: {vboxmanage_path} {' '.join(cmd)}''')
     try:
@@ -30,20 +28,10 @@ def vboxmanage(cmd):
 
 
 # VirtualBox version
-def virtualbox_version(strip_newline=0, online_check=0):
+def virtualbox_version(strip_newline=0):
     result = vboxmanage('--version')
-    vb_version = re.search(r'^(\d+\.\d+\.\d+)r', result[1], flags=re.MULTILINE)
-    if online_check:
-        print('Checking VirtualBox version.')
-        logging.debug('Checking VirtualBox version.')
-        latest_version = urllib.request.urlopen(latest_version_url)
-        if latest_version.status == 200:
-            latest_version = latest_version.read(16).decode('utf-8')
-            logging.info(f'Latest VirtualBox version: {latest_version}')
-        else:
-            logging.error(f'Error while reading latest version: {latest_version.status}.')
     if strip_newline:
-        return result[0], vb_version, result[2]
+        return result[0], result[1].rstrip(), result[2]
     else:
         return result[0], result[1], result[2]
 
@@ -78,9 +66,10 @@ def list_snapshots(vm, list=1):
 
 # Start virtual machine
 def vm_start(vm, ui='gui'):
+    ui = ui.lower()
     logging.info(f'Starting VM "{vm}".')
-    if ui not in ['gui', 'headless']:
-        logging.error(f'Unknown ui type set. Assuming gui.')
+    if ui not in ['gui', 'sdl', 'headless', 'separate']:
+        logging.error('Unknown ui type set. Assuming gui.')
         ui = 'gui'
     result = vboxmanage(f'startvm {vm} --type {ui}')
     if result[0] == 0:
@@ -273,17 +262,25 @@ def vm_screenshot(vm, screenshot_name):
 
 
 # Import VM
-def vm_import(vm_file, vm=None):
-    if vm:
-        logging.info(f'Importing file "{vm_file}" as "{vm}".')
+def vm_import(vm, vm_file, preview=0, timeout=600):
+    if preview:
+        logging.info(f'Importing file {vm_file} in preview mode.')
+        options = '--dry-run'
     else:
-        logging.info(f'Importing file "{vm_file}".')
-    result = vboxmanage(f'import {vm}')
+        logging.info(f'Importing file {vm_file}.')
+        options = ''
+    if vm:
+        result = vboxmanage(f'import {vm_file} {options} --vmname {vm}', timeout=timeout)
+    else:
+        result = vboxmanage(f'import {vm} {options}', timeout=timeout)
     return result[0], result[1], result[2]
 
 
 # Export VM
-def vm_export(vm_file, vm=None):
+def vm_export(vm, vm_file, file_format='ovf20', timeout=600):
+    if file_format not in ['legacy09', 'ovf09', 'ovf10', 'ovf20', 'opc10']:
+        logging.error('Unknown file format. Exiting.')
+        exit()
     logging.info(f'Exporting VM "{vm}" as {vm_file}.')
-    result = vboxmanage(f'export {vm}')
+    result = vboxmanage(f'export {vm} --output {vm_file}', timeout=timeout)
     return result[0], result[1], result[2]

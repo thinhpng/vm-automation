@@ -37,6 +37,12 @@ python demo_cli.py \
     --post 'C:\stop.cmd'
 ```
 
+# Host configuration
+* Both Windows and Linux are tested as host OS. May work on other platforms, supported by VirtualBox.
+* You need VirtualBox (the newer the better). Proprietary Oracle VM VirtualBox Extension Pack is *not* required.
+* It is recommended to have 'vboxmanage' in the path variable.
+* You need a recent version of Python (3.7+).
+
 # Guest configuration
 * You must have Windows as the guest OS with autologin configured (or have a snapshot with a user logged in).
 * You must have VirtualBox guest additions installed.
@@ -46,12 +52,12 @@ python demo_cli.py \
 * Distribute workload to multiple physical hosts.
 * Implement web interface.
 * Add option to use pre-running VMs.
+* Add option to use VMs from specific group or with specific label.
+* Vagrant integration (maybe).
 
 # Changelog
-Version 0.8:
-* Added option to use VMs from specific group: '--vms_group my_group' (instead of '--vms vm1 vm2 ...').
-* Added functions to export and import VMs - vm_export() and vm_import().
-* Added option to check for latest version of VirtualBox - virtualbox_version(online_check=1). Disabled by default.
+Version 0.7.3:
+* Added functions to export and import VMs - vm_export() and vm_import(). Have separate timeout settings as operations are time consuming.
 
 Version 0.7.2:
 * Added function to enumerate guest properties - vm_enumerate().
