@@ -131,5 +131,7 @@ Version 0.1:
 # Donations
 You can support further development with a donation (Thanks!).
 
+<a href="https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=XQABQMPTCN388&source=url" target="_blank"><img src="https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif"></img></a>
+
 BTC: bc1qstm95hfx26sf89h62xt804cfzg48z5qxe6cff63ff3s5d2f8f8nq3jf3u4
 
