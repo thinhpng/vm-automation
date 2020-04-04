@@ -31,6 +31,8 @@ python demo_cli.py \
     --login user \
     --password 12345678 \
     --remote_folder desktop \
+    --uac_fix 1 \
+    --uac_parent 'C:\\Windows\\Explorer.exe' \
     --network keep \
     --resolution '1920 1080 32' \
     --pre 'C:\start.cmd' \
