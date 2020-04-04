@@ -48,7 +48,7 @@ guests_options.add_argument('--password', default='12345678', type=str, nargs='?
 guests_options.add_argument('--remote_folder', default='desktop', choices=['desktop', 'downloads', 'documents', 'temp'],
                             type=str, nargs='?',
                             help='Destination folder in guest OS to place file. (default: %(default)s)')
-guests_options.add_argument('--uac_fix', default=0, choices=[0, 1], type=int,
+guests_options.add_argument('--uac_fix', default=1, choices=[0, 1], type=int,
                             nargs='?', help='Fix for files with UAC elevation (default: %(default)s)')
 guests_options.add_argument('--uac_parent', default='C:\\Windows\\Explorer.exe', type=str,
                             nargs='?', help='Path for parent app, which will start main file (default: %(default)s)')
