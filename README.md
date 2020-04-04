@@ -11,16 +11,16 @@ Essential commands (command-line interface):
 ```
 python demo_cli.py \
     putty.exe \
-    --vms w10_x64 w10_x86 \
-    --snapshots live
+    --vms windows10 windows8 windows7 \
+    --snapshots firefox chrome edge
 ```
 
 All options (command-line interface):
 ```
 python demo_cli.py \
     putty.exe \ 
-    --vms w10_x64 w10_x86 \
-    --snapshots snapshot1 snapshot2 \
+    --vms windows10 windows8 windows7 \
+    --snapshots firefox chrome ie \
     --vboxmanage /usr/bin/vboxmanage \
     --timeout 60 \
     --info 1 \
@@ -40,22 +40,37 @@ python demo_cli.py \
 # Host configuration
 * Both Windows and Linux are tested as host OS. May work on other platforms, supported by VirtualBox.
 * You need VirtualBox (the newer the better). Proprietary Oracle VM VirtualBox Extension Pack is *not* required.
-* It is recommended to have 'vboxmanage' in the path variable.
+* It is recommended to have folder with 'vboxmanage' binary in the environment variables.
 * You need a recent version of Python (3.7+).
 
 # Guest configuration
 * You must have Windows as the guest OS with autologin configured (or have a snapshot with a user logged in).
 * You must have VirtualBox guest additions installed.
 * It is strongly recommended to have live snapshots to restore to (otherwise it will be *much* slower).
+* Guest disk encryption is *not* supported (at least for now. VBoxManage limitation).
+* Files, that require UAC elevation, are *not* supported (at least for now. VBoxManage limitation).
 
 # TODO:
 * Distribute workload to multiple physical hosts.
 * Implement web interface.
 * Add option to use pre-running VMs.
-* Add option to use VMs from specific group or with specific label.
+* Add global progress status.
 * Vagrant integration (maybe).
+* Code optimization and fixes.
+* Better tests coverage.
 
 # Changelog
+Version 0.8:
+* Added options 'uac_fix' and 'uac_parent' for vm_exec() function.
+Used to circumvent VirtualBox error VERR_PROC_ELEVATION_REQUIRED, when trying to execute application with mandatory UAC elevation.
+* Added short aliases for '--vms' and '--snapshots' options: '-v' and '-s'.
+* Added option 'dictionary' for list_vms() function. List of VMs will be returned as {'vm': '/group'} dictionary.
+* Added function to clone VM - vm_clone().
+* Added function to record guest screen - vm_record().
+* Added option to restore current snapshot: vm_snapshot_restore('vm', 'restorecurrent').
+* Updated vm_screenshot() function - code to generate image index moved to main script.
+* All files converted to Unix EOL (LF).
+
 Version 0.7.3:
 * Docstring added for all the functions (Sphinx format). Usage: help(function_name).
 * Added functions to export and import VMs - vm_export() and vm_import(). Have separate timeout settings as operations are time consuming.
@@ -124,9 +139,9 @@ Version 0.1:
 
 <a href="http://www.youtube.com/watch?feature=player_embedded&v=t6AWew06rxo" target="_blank"><img src="http://img.youtube.com/vi/t6AWew06rxo/0.jpg" width="320" height="240" border="10" /></a>
 
-* Linux host (version 0.2-0.3):
+* Linux host (version 0.7.3):
 
-<a href="http://www.youtube.com/watch?feature=player_embedded&v=pao3KihklV4" target="_blank"><img src="http://img.youtube.com/vi/pao3KihklV4/0.jpg" width="320" height="240" border="10" /></a>
+<a href="http://www.youtube.com/watch?feature=player_embedded&v=QnXfmPVbmlo" target="_blank"><img src="http://img.youtube.com/vi/QnXfmPVbmlo/0.jpg" width="320" height="240" border="10" /></a>
 
 # Donations
 You can support further development with a donation (Thanks!).

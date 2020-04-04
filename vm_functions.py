@@ -1,12 +1,10 @@
 import logging
-import os
 import re
 import subprocess
 
 if __name__ == "__main__":
     print('This script only contains functions and cannot be called directly. See "demo_cli.py" for usage example.')
     exit(1)
-
 
 # Set essential options
 if 'vboxmanage_path' not in locals():
@@ -23,7 +21,7 @@ def vboxmanage(cmd, timeout=timeout):
     :return: returncode, stdout, stderr.
     """
     cmd = f'{vboxmanage_path} {cmd}'.split()
-    logging.debug(f'''Running command: {vboxmanage_path} {' '.join(cmd)}''')
+    logging.debug(f'''Running command: {' '.join(cmd)}''')
     try:
         result = subprocess.run(cmd, capture_output=True, timeout=timeout, text=True)
         return result.returncode, result.stdout, result.stderr
@@ -45,19 +43,30 @@ def virtualbox_version(strip_newline=0):
         return result[0], result[1], result[2]
 
 
-def list_vms(list=1):
+def list_vms(list=1, dictionary=0,):
     """Return list of virtual machines
 
     :param list: Return stdout as a list.
+    :param dictionary: Return stdout as a {'vm': 'group'} dictionary. Overrides 'list' option.
+    :param group: List virtual machines in specific group. Overrides 'dictionary' option.
     :return: returncode, stdout, stderr.
     """
-    result = vboxmanage('list vms --sorted')
+    if dictionary or group:
+        options = '--long'
+    else:
+        options = ''
+    result = vboxmanage(f'list vms --sorted {options}')
     if result[0] == 0:
-        if list:
-            vms_list = re.findall(r'^"(\w+)"', result[1], flags=re.MULTILINE)
+        if dictionary:
+            # Convert output to {'vm': 'group'} dictionary.
+            vms = re.findall(r'^Name:\s+(\S+)', result[1], flags=re.MULTILINE)
+            groups = re.findall(r'^Groups:\s+(\S+)', result[1], flags=re.MULTILINE)
+            vms_list_ = dict(zip(vms, groups))
+        elif list:
+            vms_list_ = re.findall(r'^"(\w+)"', result[1], flags=re.MULTILINE)
         else:
-            vms_list = result[1]
-        return result[0], vms_list, result[2]
+            vms_list_ = result[1]
+        return result[0], vms_list_, result[2]
     else:
         logging.error(f'Unable to get list of VMs: {result[2]}')
         return result[0], result[1], result[2]
@@ -182,12 +191,20 @@ def vm_snapshot_restore(vm, snapshot):
     :param snapshot: Snapshot name.
     :return: returncode, stdout, stderr.
     """
-    logging.info(f'Restoring VM "{vm}" to snapshot "{snapshot}".')
-    result = vboxmanage(f'snapshot {vm} restore {snapshot}')
-    if result[0] == 0:
-        logging.debug(f'VM "{vm}" restored to snapshot "{snapshot}".')
+    if snapshot == 'restorecurrent':
+        logging.info(f'Restoring VM "{vm}" to current snapshot.')
+        result = vboxmanage(f'snapshot {vm} restorecurrent')
+        if result[0] == 0:
+            logging.debug(f'VM "{vm}" restored to current snapshot.')
+        else:
+            logging.error(f'Error while restoring VM "{vm}" to current snapshot: {result[2]}.')
     else:
-        logging.error(f'Error while restoring VM "{vm}" to snapshot "{snapshot}": {result[2]}.')
+        logging.info(f'Restoring VM "{vm}" to snapshot "{snapshot}".')
+        result = vboxmanage(f'snapshot {vm} restore {snapshot}')
+        if result[0] == 0:
+            logging.debug(f'VM "{vm}" restored to snapshot "{snapshot}".')
+        else:
+            logging.error(f'Error while restoring VM "{vm}" to snapshot "{snapshot}": {result[2]}.')
     return result[0], result[1], result[2]
 
 
@@ -246,17 +263,24 @@ def vm_set_resolution(vm, screen_resolution):
     return result[0], result[1], result[2]
 
 
-def vm_exec(vm, username, password, remote_file):
+def vm_exec(vm, username, password, remote_file, uac_fix=1, uac_parent='C:\\Windows\\Explorer.exe'):
     """Execute file/command on guest OS
 
     :param vm: Virtual machine name.
     :param username: Guest OS username (login).
     :param password: Guest OS password.
     :param remote_file: Path to file on guest OS.
+    :param uac_fix: Try to bypass VirtualBox error VERR_PROC_ELEVATION_REQUIRED.
+    :param uac_parent: Parent application used to start main file.
     :return: returncode, stdout, stderr.
     """
-    logging.info(f'{vm}: Executing file "{remote_file}" on VM "{vm}".')
-    result = vboxmanage(f'guestcontrol {vm} --username {username} --password {password} start {remote_file}')
+    if uac_fix:
+        logging.info(f'{vm}: Executing file "{remote_file}" with parent "{uac_parent}" on VM "{vm}".')
+        result = vboxmanage(f'guestcontrol {vm} --username {username} --password {password} start {uac_parent} {remote_file}')
+    else:
+        logging.info(f'{vm}: Executing file "{remote_file}" on VM "{vm}".')
+        result = vboxmanage(f'guestcontrol {vm} --username {username} --password {password} start {remote_file}')
+
     if result[0] == 0:
         logging.debug('File executed successfully.')
     else:
@@ -359,20 +383,45 @@ def vm_screenshot(vm, screenshot_name):
     :param screenshot_name: Name of file to save screenshot as.
     :return: returncode, stdout, stderr.
     """
-    screenshot_index = 1
-    while screenshot_index < 10000:
-        screenshot_index_zeros = str(screenshot_index).zfill(4)
-        screenshot_name_num = f'{screenshot_name}_{screenshot_index_zeros}.png'
-        if os.path.isfile(screenshot_name_num):
-            screenshot_index += 1
-        else:
-            break
-    logging.info(f'Taking screenshot "{screenshot_name_num}" on VM "{vm}".')
-    result = vboxmanage(f'controlvm {vm} screenshotpng {screenshot_name_num}')
+    logging.debug(f'Taking screenshot "{screenshot_name}" on VM "{vm}".')
+    result = vboxmanage(f'controlvm {vm} screenshotpng {screenshot_name}')
     if result[0] == 0:
         logging.debug('Screenshot created.')
     else:
         logging.error(f'Error while taking screenshot: {result[2]}')
+    return result[0], result[1], result[2]
+
+
+def vm_record(vm, filename, screens='all', fps=10, duration=0):
+    logging.info(f'Recording video as "{filename}" on VM "{vm}".')
+    result = vboxmanage(f'controlvm {vm} recording screens {screens}')
+    if result[0] != 0:
+        return result[0], result[1], result[2]
+    result = vboxmanage(f'controlvm {vm} recording filename {filename}')
+    if result[0] != 0:
+        return result[0], result[1], result[2]
+    result = vboxmanage(f'controlvm {vm} recording videofps {fps}')
+    if result[0] != 0:
+        return result[0], result[1], result[2]
+    if duration > 0:
+        result = vboxmanage(f'controlvm {vm} recording maxtime {duration}')
+        if result[0] != 0:
+            return result[0], result[1], result[2]
+    result = vboxmanage(f'controlvm {vm} recording on')
+    if result[0] == 0:
+        logging.debug('Recording started.')
+    else:
+        logging.error(f'Error while recording video: {result[2]}')
+    return result[0], result[1], result[2]
+
+
+def vm_record_stop(vm):
+    logging.info(f'Stopping recording on VM "{vm}".')
+    result = vboxmanage(f'controlvm {vm} recording off')
+    if result[0] == 0:
+        logging.debug('Recording stopped.')
+    else:
+        logging.error(f'Error while stopping recording: {result[2]}')
     return result[0], result[1], result[2]
 
 
@@ -395,6 +444,10 @@ def vm_import(vm, vm_file, preview=0, timeout=600):
         result = vboxmanage(f'import {vm_file} {options} --vmname {vm}', timeout=timeout)
     else:
         result = vboxmanage(f'import {vm} {options}', timeout=timeout)
+    if result[0] == 0:
+        logging.debug('VM imported.')
+    else:
+        logging.error(f'Error while importing VM: {result[2]}')
     return result[0], result[1], result[2]
 
 
@@ -412,4 +465,26 @@ def vm_export(vm, vm_file, file_format='ovf20', timeout=600):
         exit()
     logging.info(f'Exporting VM "{vm}" as {vm_file}.')
     result = vboxmanage(f'export {vm} --output {vm_file}', timeout=timeout)
+    if result[0] == 0:
+        logging.debug('VM exported.')
+    else:
+        logging.error(f'Error while exporting VM: {result[2]}')
+    return result[0], result[1], result[2]
+
+
+def vm_clone(vm, name, mode='all', register=1, timeout=600):
+    """Clone virtual machine
+
+    :param vm: Virtual machine to clone.
+    :param name: Clone name.
+    :param mode: Clone mode (machine/machinechildren/all).
+    :param register: Register cloned virtual machine.
+    :param timeout: Timeout for operation, seconds.
+    :return:
+    """
+    if register:
+        options = '--register'
+    else:
+        options = ''
+    result = vboxmanage(f'clonevm {vm} --mode={mode} --name={name} {options}', timeout=timeout)
     return result[0], result[1], result[2]
