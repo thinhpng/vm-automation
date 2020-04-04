@@ -3,8 +3,9 @@ import logging
 import random
 import threading
 import time
+import os
 
-script_version = '0.7.3'
+script_version = '0.8'
 
 try:
     import support_functions
@@ -18,11 +19,9 @@ parser = argparse.ArgumentParser(prog='vm-automation')
 
 required_options = parser.add_argument_group('Required options')
 required_options.add_argument('file', type=str, nargs='+', help='Path to file')
-required_options.add_argument('--vms', type=str, nargs='*', required=True,
-                              help='Space-separated list of VMs to use')
-# required_options.add_argument('--vms_group', type=str, nargs='*', required=True,
-#                               help='Group of VMs to use')
-required_options.add_argument('--snapshots', type=str, nargs='*', required=True,
+required_options.add_argument('--vms', '-v', type=str, nargs='*', required=True,
+                   help='Space-separated list of VMs to use')
+required_options.add_argument('--snapshots', '-s', type=str, nargs='*', required=True,
                               help='Space-separated list of snapshots to use')
 
 main_options = parser.add_argument_group('Main options')
@@ -44,11 +43,15 @@ guests_options.add_argument('--ui', default='gui', choices=['gui', 'headless'], 
                             help='Start VMs in GUI or headless mode (default: %(default)s)')
 guests_options.add_argument('--login', default='user', type=str, nargs='?',
                             help='Login for guest OS (default: %(default)s)')
-guests_options.add_argument('--password', default='P@ssw0rd', type=str, nargs='?',
+guests_options.add_argument('--password', default='12345678', type=str, nargs='?',
                             help='Password for guest OS (default: %(default)s)')
 guests_options.add_argument('--remote_folder', default='desktop', choices=['desktop', 'downloads', 'documents', 'temp'],
                             type=str, nargs='?',
                             help='Destination folder in guest OS to place file. (default: %(default)s)')
+guests_options.add_argument('--uac_fix', default=1, choices=[0, 1], type=int,
+                            nargs='?', help='Fix for files with UAC elevation (default: %(default)s)')
+guests_options.add_argument('--uac_parent', default='C:\\Windows\\Explorer.exe', type=str,
+                            nargs='?', help='Path for parent app, which will start main file (default: %(default)s)')
 guests_options.add_argument('--network', default='keep', choices=['on', 'off', 'keep'], nargs='?',
                             help='State of guest OS network (default: %(default)s)')
 guests_options.add_argument('--resolution', default='1920 1080 32', type=str, nargs='?',
@@ -83,6 +86,8 @@ vm_post_exec = args.post
 vm_login = args.login
 vm_password = args.password
 remote_folder = args.remote_folder
+uac_fix = args.uac_fix
+uac_parent = args.uac_parent
 vm_network_state = args.network
 vm_resolution = args.resolution
 
@@ -100,16 +105,31 @@ elif verbosity in ['error', 'info', 'debug']:
                                          filename=log, filemode='a')
     vm_functions.logger = logging.getLogger('vm-automation')
 
-# Show info
-logging.info(f'Script version: {script_version}')
-logging.info(f'VirtualBox version: {vm_functions.virtualbox_version(strip_newline=1)[1]}\n')
 
-logging.info(f'VMs: {vms_list}')
-logging.info(f'Snapshots: {snapshots_list}\n')
-result = support_functions.file_info(filename, show_info)
-if result != 0:
-    logging.error('Error while processing file. Exiting.')
-    exit(1)
+# Show general info
+def show_info():
+    logging.info(f'Script version: {script_version}')
+    logging.info(f'VirtualBox version: {vm_functions.virtualbox_version(strip_newline=1)[1]}\n')
+
+    logging.info(f'VMs: {vms_list}')
+    logging.info(f'Snapshots: {snapshots_list}\n')
+    result = support_functions.file_info(filename, show_info)
+    if result != 0:
+        logging.error('Error while processing file. Exiting.')
+        exit(1)
+
+
+# Function to take screenshot on guest OS
+def take_screenshot(vm, task_name):
+    screenshot_index = 1
+    while screenshot_index < 10000:
+        screenshot_index_zeros = str(screenshot_index).zfill(4)
+        screenshot_name_num = f'{task_name}_{screenshot_index_zeros}.png'
+        if os.path.isfile(screenshot_name_num):
+            screenshot_index += 1
+        else:
+            vm_functions.vm_screenshot(vm, screenshot_name_num)
+            break
 
 
 # Main routines
@@ -146,7 +166,7 @@ def main_routine(vm, snapshots_list):
 
         # Set guest resolution
         if vm_resolution == 'random':
-            resolutions = ['1920 1080 32', '1920 1200 32', '2560 1440 32', '3840 2160 32']
+            resolutions = ['1280 1024 32', '1920 1080 32', '1920 1200 32', '2560 1440 32', '3840 2160 32']
             random_resolution = random.choice(resolutions)
             vm_functions.vm_set_resolution(vm, random_resolution)
         else:
@@ -155,50 +175,51 @@ def main_routine(vm, snapshots_list):
         # Run pre exec script
         if vm_pre_exec:
             vm_functions.vm_exec(vm, vm_login, vm_password, vm_pre_exec)
+            take_screenshot(vm, task_name)
         else:
             logging.debug('Pre exec is not set.')
 
-        # Randomize filename
-        random_filename = support_functions.randomize_filename(vm_login, filename, remote_folder)
+        # Set path to file on guest OS
+        remote_file_path = support_functions.randomize_filename(vm_login, filename, remote_folder)
 
         # Upload file to VM, check if file exist and execute
-        result = vm_functions.vm_upload(vm, vm_login, vm_password, filename, random_filename)
+        result = vm_functions.vm_upload(vm, vm_login, vm_password, filename, remote_file_path)
         if result[0] != 0:
-            vm_functions.vm_screenshot(vm, task_name)
+            take_screenshot(vm, task_name)
             vm_functions.vm_stop(vm)
             continue
-        vm_functions.vm_screenshot(vm, task_name)
+        take_screenshot(vm, task_name)
 
         # Check if file exist on VM
-        result = vm_functions.vm_file_stat(vm, vm_login, vm_password, random_filename)
+        result = vm_functions.vm_file_stat(vm, vm_login, vm_password, remote_file_path)
         if result[0] != 0:
-            vm_functions.vm_screenshot(vm, task_name)
+            take_screenshot(vm, task_name)
             vm_functions.vm_stop(vm)
             continue
-        vm_functions.vm_screenshot(vm, task_name)
+        take_screenshot(vm, task_name)
 
         # Run file
-        result = vm_functions.vm_exec(vm, vm_login, vm_password, random_filename)
+        result = vm_functions.vm_exec(vm, vm_login, vm_password, remote_file_path, uac_fix=uac_fix,
+                                      uac_parent=uac_parent)
         if result[0] != 0:
-            vm_functions.vm_screenshot(vm, task_name)
+            take_screenshot(vm, task_name)
             vm_functions.vm_stop(vm)
             continue
 
-        vm_functions.vm_screenshot(vm, task_name)
+        take_screenshot(vm, task_name)
         logging.debug(f'Waiting for {timeout / 2} seconds...')
         time.sleep(timeout / 2)
-        vm_functions.vm_screenshot(vm, task_name)
+        take_screenshot(vm, task_name)
         logging.debug(f'Waiting for {timeout / 2} seconds...')
         time.sleep(timeout / 2)
-        vm_functions.vm_screenshot(vm, task_name)
+        take_screenshot(vm, task_name)
 
         # Run post exec script
         if vm_post_exec:
             vm_functions.vm_exec(vm, vm_login, vm_password, vm_post_exec)
+            take_screenshot(vm, task_name)
         else:
             logging.debug('Post exec is not set.')
-
-        vm_functions.vm_screenshot(vm, task_name)
 
         # Stop VM, restore snapshot
         vm_functions.vm_stop(vm)
@@ -206,10 +227,11 @@ def main_routine(vm, snapshots_list):
         logging.info(f'{task_name}: Task finished')
 
 
-# If vms_list is set to 'all', obtain list of all available VMs and use them
 if 'all' in vms_list:
+    # If vms_list is set to 'all', obtain list of all available VMs and use them
     vms_list = vm_functions.list_vms()
 
+# Autodetect snapshots
 if 'all' in snapshots_list:
     snapshots_autodetect = True
 else:
@@ -221,6 +243,8 @@ if threads == 0:
     logging.debug(f'Threads count is set to number of VMs: {threads}')
 else:
     logging.debug(f'Threads count is set to {threads}')
+
+show_info()
 
 # Start threads
 for vm in vms_list:

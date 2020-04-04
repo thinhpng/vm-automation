@@ -10,6 +10,18 @@ if __name__ == "__main__":
     exit(1)
 
 
+def file_hash(file):
+    file_hash_ = hashlib.sha256()
+    block_size = 65536
+    with open(file, 'rb') as f:
+        fb = f.read(block_size)
+        while len(fb) > 0:
+            file_hash_.update(fb)
+            fb = f.read(block_size)
+    sha256sum = file_hash_.hexdigest()
+    return sha256sum
+
+
 # Show info about file
 def file_info(file, show_info=True):
     file = ''.join(file)
@@ -22,14 +34,7 @@ def file_info(file, show_info=True):
 
     # Print hash and links
     if show_info:
-        file_hash = hashlib.sha256()
-        block_size = 65536
-        with open(file, 'rb') as f:
-            fb = f.read(block_size)
-            while len(fb) > 0:
-                file_hash.update(fb)
-                fb = f.read(block_size)
-        sha256sum = file_hash.hexdigest()
+        sha256sum = file_hash(file)
         logging.info(f'sha256: {sha256sum}')
         logging.info(f'Search VT: https://www.virustotal.com/gui/file/{sha256sum}/detection')
         logging.info(f'Search Google: https://www.google.com/search?q={sha256sum}\n')
