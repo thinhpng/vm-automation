@@ -43,15 +43,14 @@ def virtualbox_version(strip_newline=0):
         return result[0], result[1], result[2]
 
 
-def list_vms(list=1, dictionary=0,):
+def list_vms(list=1, dictionary=0):
     """Return list of virtual machines
 
     :param list: Return stdout as a list.
     :param dictionary: Return stdout as a {'vm': 'group'} dictionary. Overrides 'list' option.
-    :param group: List virtual machines in specific group. Overrides 'dictionary' option.
     :return: returncode, stdout, stderr.
     """
-    if dictionary or group:
+    if dictionary:
         options = '--long'
     else:
         options = ''
