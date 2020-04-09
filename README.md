@@ -62,6 +62,9 @@ python demo_cli.py \
 * Better tests coverage.
 
 # Changelog
+Version 0.8.1:
+* Fixed bug with some command line args were ignored (--ui).
+
 Version 0.8:
 * Added options 'uac_fix' and 'uac_parent' for vm_exec() function.
 Used to circumvent VirtualBox error VERR_PROC_ELEVATION_REQUIRED, when trying to execute application with mandatory UAC elevation.
