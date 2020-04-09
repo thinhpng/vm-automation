@@ -77,7 +77,7 @@ show_info = args.info
 
 # vm_functions options
 vm_functions.vboxmanage_path = args.vboxmanage
-vm_functions.ui = args.ui
+ui = args.ui
 vm_functions.timeout = timeout
 
 # VM options
@@ -149,7 +149,7 @@ def main_routine(vm, snapshots_list):
             continue
 
         time.sleep(3)
-        result = vm_functions.vm_start(vm)
+        result = vm_functions.vm_start(vm, ui)
         # If we were unable to start VM - continue to next one
         if result[0] != 0:
             logging.error(f'Unable to start VM {vm}. VM will be skipped.')
