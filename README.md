@@ -50,7 +50,6 @@ python demo_cli.py \
 * You must have VirtualBox guest additions installed.
 * It is strongly recommended to have live snapshots to restore to (otherwise it will be *much* slower).
 * Guest disk encryption is *not* supported (at least for now. VBoxManage limitation).
-* Files, that require UAC elevation, are *not* supported (at least for now. VBoxManage limitation).
 
 # TODO:
 * Distribute workload to multiple physical hosts.
