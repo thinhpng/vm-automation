@@ -5,7 +5,7 @@ import threading
 import time
 import os
 
-script_version = '0.8'
+script_version = '0.8.2'
 
 try:
     import support_functions
