@@ -61,6 +61,9 @@ python demo_cli.py \
 * Better tests coverage.
 
 # Changelog
+Version 0.8.2:
+* Added vm_backup(vm) function. Takes live snapshot with name in 'backup_YYYY_MM_DD_HH_MM_SS' format.
+
 Version 0.8.1:
 * Fixed bug with some command line args were ignored (--ui).
 

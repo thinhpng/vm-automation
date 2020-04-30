@@ -1,6 +1,8 @@
 import logging
 import re
 import subprocess
+import datetime
+
 
 if __name__ == "__main__":
     print('This script only contains functions and cannot be called directly. See "demo_cli.py" for usage example.')
@@ -171,15 +173,29 @@ def vm_snapshot_take(vm, snapshot, live=0):
     :param live: Take a live snapshot.
     :return: returncode, stdout, stderr.
     """
-    logging.info(f'Taking snapshot "{snapshot}" for VM "{vm}"')
     if live:
-        result = vboxmanage(f'snapshot {vm} take {snapshot}')
+        logging.info(f'Taking live snapshot "{snapshot}" for VM "{vm}".')
+        options = '--live'
     else:
-        result = vboxmanage(f'snapshot {vm} take {snapshot} --live')
+        logging.info(f'Taking snapshot "{snapshot}" for VM "{vm}".')
+        options = ''
+    result = vboxmanage(f'snapshot {vm} take {snapshot} {options}')
     if result[0] == 0:
         logging.debug('Snapshot created.')
     else:
         logging.error(f'Error while creating snapshot: {result[2]}')
+    return result[0], result[1], result[2]
+
+
+def vm_backup(vm):
+    """Take live snapshot for virtual machine with timestamp
+
+    :param vm: Virtual machine name.
+    :return: returncode, stdout, stderr.
+    """
+    now = datetime.datetime.now()
+    snapshot = f'backup_{now.strftime("%Y_%m_%d_%H_%M_%S")}'
+    result = vm_snapshot_take(vm, snapshot, live=1)
     return result[0], result[1], result[2]
 
 
