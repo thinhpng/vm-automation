@@ -1,4 +1,4 @@
-# vm-automation
+# VirtualBox VM automation in Python
 Python script that can be used to automate testing of software/scripts/etc on VMs (currently only VirtualBox is supported). Based on VBoxManage command-line interface and does not require VirtualBox SDK.
 
 Both Windows and Linux are supported as host OS.
@@ -51,14 +51,16 @@ python demo_cli.py \
 * It is strongly recommended to have live snapshots to restore to (otherwise it will be *much* slower).
 * Guest disk encryption is *not* supported (at least for now. VBoxManage limitation).
 
-# TODO:
+# TODO (version 1.0):
+* Code optimization and fixes.
+* Better tests coverage.
+
+# TODO (version 2.0):
 * Distribute workload to multiple physical hosts.
 * Implement web interface.
 * Add option to use pre-running VMs.
 * Add global progress status.
 * Vagrant integration (maybe).
-* Code optimization and fixes.
-* Better tests coverage.
 
 # Changelog
 Version 0.8.2:
