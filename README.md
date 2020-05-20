@@ -61,6 +61,8 @@ python demo_cli.py \
 * Add option to use pre-running VMs.
 * Add global progress status.
 * Vagrant integration (maybe).
+* VMware support (maybe).
+* Code optimization and fixes.
 
 # Changelog
 Version 0.8.2:
