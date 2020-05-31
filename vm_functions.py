@@ -278,23 +278,17 @@ def vm_set_resolution(vm, screen_resolution):
     return result[0], result[1], result[2]
 
 
-def vm_exec(vm, username, password, remote_file, uac_fix=1, uac_parent='C:\\Windows\\Explorer.exe'):
+def vm_exec(vm, username, password, remote_file, uac_parent='C:\\Windows\\Explorer.exe'):
     """Execute file/command on guest OS
 
     :param vm: Virtual machine name.
     :param username: Guest OS username (login).
     :param password: Guest OS password.
     :param remote_file: Path to file on guest OS.
-    :param uac_fix: Try to bypass VirtualBox error VERR_PROC_ELEVATION_REQUIRED.
-    :param uac_parent: Parent application used to start main file.
     :return: returncode, stdout, stderr.
     """
-    if uac_fix:
-        logging.info(f'{vm}: Executing file "{remote_file}" with parent "{uac_parent}" on VM "{vm}".')
-        result = vboxmanage(f'guestcontrol {vm} --username {username} --password {password} start {uac_parent} {remote_file}')
-    else:
-        logging.info(f'{vm}: Executing file "{remote_file}" on VM "{vm}".')
-        result = vboxmanage(f'guestcontrol {vm} --username {username} --password {password} start {remote_file}')
+    logging.info(f'{vm}: Executing file "{remote_file}" with parent "{uac_parent}" on VM "{vm}".')
+    result = vboxmanage(f'guestcontrol {vm} --username {username} --password {password} start {uac_parent} {remote_file}')
 
     if result[0] == 0:
         logging.debug('File executed successfully.')
@@ -408,6 +402,15 @@ def vm_screenshot(vm, screenshot_name):
 
 
 def vm_record(vm, filename, screens='all', fps=10, duration=0):
+    '''Start screen recording on VM
+
+    :param vm: Virtual machine name.
+    :param filename: Name of file to save video as.
+    :param screens: Screens to record.
+    :param fps: Frames per second.
+    :param duration: Record duration.
+    :return:
+    '''
     logging.info(f'Recording video as "{filename}" on VM "{vm}".')
     result = vboxmanage(f'controlvm {vm} recording screens {screens}')
     if result[0] != 0:
@@ -431,6 +434,11 @@ def vm_record(vm, filename, screens='all', fps=10, duration=0):
 
 
 def vm_record_stop(vm):
+    '''Stop screen recording on VM
+
+    :param vm: Virtual machine name.
+    :return:
+    '''
     logging.info(f'Stopping recording on VM "{vm}".')
     result = vboxmanage(f'controlvm {vm} recording off')
     if result[0] == 0:

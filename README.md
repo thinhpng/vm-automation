@@ -23,17 +23,17 @@ python demo_cli.py \
     --snapshots firefox chrome ie \
     --vboxmanage /usr/bin/vboxmanage \
     --timeout 60 \
-    --info 1 \
     --threads 2 \
     --verbosity info \
     --log vm_automation.log \
+    --report 1 \
     --ui gui \
     --login user \
     --password 12345678 \
     --remote_folder desktop \
-    --uac_fix 1 \
     --uac_parent 'C:\\Windows\\Explorer.exe' \
     --network keep \
+    --record C:\\video.webm \
     --resolution '1920 1080 32' \
     --pre 'C:\start.cmd' \
     --post 'C:\stop.cmd'
@@ -49,13 +49,14 @@ python demo_cli.py \
 * You must have Windows as the guest OS with autologin configured (or have a snapshot with a user logged in).
 * You must have VirtualBox guest additions installed.
 * It is strongly recommended to have live snapshots to restore to (otherwise it will be *much* slower).
-* Guest disk encryption is *not* supported (at least for now. VBoxManage limitation).
+* VM disk encryption is *not* supported (VBoxManage limitation).
 
 # TODO (version 1.0):
 * Code optimization and fixes.
 * Better tests coverage.
 
 # TODO (version 2.0):
+* Use VirtualBox API.
 * Distribute workload to multiple physical hosts.
 * Implement web interface.
 * Add option to use pre-running VMs.
@@ -63,8 +64,16 @@ python demo_cli.py \
 * Vagrant integration (maybe).
 * VMware support (maybe).
 * Code optimization and fixes.
+* Better tests coverage.
 
 # Changelog
+Version 0.9:
+* Added option to generate html report ('--report'). Result (including screenshots) will be saved under ./reports/<file_hash> directory.
+* Added option to record video from guest VM ('--record output.webm').
+* uac_parent is now applied to both pre_exec and post_exec commands too.
+* Removed '--info' and '--uac_fix' arguments. Both options are enabled from now on.
+* Added alias '--user' for '--login' option.
+
 Version 0.8.2:
 * Added vm_backup(vm) function. Takes live snapshot with name in 'backup_YYYY_MM_DD_HH_MM_SS' format.
 
@@ -157,5 +166,4 @@ Version 0.1:
 # Donations
 You can support further development with a donation (Thanks!).
 
-<a href="https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=XQABQMPTCN388&source=url" target="_blank"><img src="https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif"></img></a>
-
+BTC: bc1qstm95hfx26sf89h62xt804cfzg48z5qxe6cff63ff3s5d2f8f8nq3jf3u4
