@@ -23,6 +23,12 @@ def file_hash(file):
     return sha256sum
 
 
+def file_size(file):
+    size = os.path.getsize(file)
+    size_kb = round(size / 1024)
+    return size_kb
+
+
 # Show info about file
 def file_info(file):
     file = ''.join(file)
@@ -34,11 +40,13 @@ def file_info(file):
         return 1
 
     # Print hash and links
-    sha256sum = file_hash(file)
-    logging.info(f'sha256: {sha256sum}')
-    logging.info(f'Search VT: https://www.virustotal.com/gui/file/{sha256sum}/detection')
-    logging.info(f'Search Google: https://www.google.com/search?q={sha256sum}\n')
-    return 0, sha256sum
+    checksum = file_hash(file)
+    size = file_size(file)
+    logging.info(f'Sha256 hash: {checksum}')
+    logging.info(f'Size: {size} Kb')
+    logging.info(f'Search VT: https://www.virustotal.com/gui/file/{checksum}/detection')
+    logging.info(f'Search Google: https://www.google.com/search?q={checksum}\n')
+    return 0, checksum, size
 
 
 def randomize_filename(login, file, destination_folder):
@@ -64,7 +72,7 @@ def randomize_filename(login, file, destination_folder):
     return random_filename
 
 
-def html_report(vms_list, snapshots_list, filename, sha256, timeout, vm_network_state, reports_directory='reports'):
+def html_report(vms_list, snapshots_list, filename, file_size, sha256, timeout, vm_network_state, reports_directory='reports'):
     # Set options and paths
     now = datetime.datetime.now()
     time = now.strftime("%Y-%m-%d %H:%M:%S")
@@ -85,6 +93,10 @@ def html_report(vms_list, snapshots_list, filename, sha256, timeout, vm_network_
       <tr>
         <td><b>Filename:</b></td>
         <td>{filename}</td>
+      </tr>
+      <tr>
+        <td><b>File size:</b></td>
+        <td>{file_size} Kb</td>
       </tr>
       <tr>
         <td><b>Sha256 hash:</b></td>
@@ -114,12 +126,9 @@ def html_report(vms_list, snapshots_list, filename, sha256, timeout, vm_network_
             for screenshot in screenshots:
                 # Check if filename matches task name and have .png extension
                 if re.search(rf'{vm}_{snapshot}_\d+\.png', screenshot):
-                    print(f'{screenshot} matches pattern!')
                     html_template_screenshots += f'''
                     <a href="{screenshot}" target=_blank><img src="{screenshot}" width="320" high="240"></img></a>
                     '''
-                else:
-                    print(f'{screenshot} does not matches pattern!')
 
     html_template_footer = '</body></html>'
 
