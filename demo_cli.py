@@ -5,7 +5,7 @@ import threading
 import time
 import os
 
-script_version = '0.9'
+script_version = '0.9.1'
 
 try:
     import support_functions
@@ -114,7 +114,7 @@ def show_info():
     if result[0] != 0:
         logging.error('Error while processing file. Exiting.')
         exit(1)
-    return result[1]
+    return result[1], result[2]
 
 
 # Function to take screenshot on guest OS
@@ -217,6 +217,11 @@ def main_routine(vm, snapshots_list):
         time.sleep(timeout / 2)
         take_screenshot(vm, task_name)
 
+        # Check for file at the end of task
+        result = vm_functions.vm_file_stat(vm, vm_login, vm_password, remote_file_path)
+        if result[0] != 0:
+            logging.info('Original file does not exists anymore (melted or removed by AV).')
+
         # Run post exec script
         if vm_post_exec:
             vm_functions.vm_exec(vm, vm_login, vm_password, vm_post_exec, uac_parent=uac_parent)
@@ -226,7 +231,7 @@ def main_routine(vm, snapshots_list):
 
         # Save html report as ./reports/<file_hash>/index.html
         if report:
-            support_functions.html_report(vms_list, snapshots_list, filename, sha256, timeout, vm_network_state)
+            support_functions.html_report(vms_list, snapshots_list, filename, file_size, sha256, timeout, vm_network_state)
 
         # Stop VM, restore snapshot
         vm_functions.vm_stop(vm)
@@ -251,7 +256,7 @@ if threads == 0:
 else:
     logging.debug(f'Threads count is set to {threads}')
 
-sha256 = show_info()
+sha256, file_size = show_info()
 
 # Start threads
 for vm in vms_list:

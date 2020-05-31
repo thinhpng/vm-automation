@@ -67,6 +67,11 @@ python demo_cli.py \
 * Better tests coverage.
 
 # Changelog
+Version 0.9.1:
+* Small cleanups.
+* Added check for original file at the end of analysis.
+* Added more data to html report.
+
 Version 0.9:
 * Added option to generate html report ('--report'). Result (including screenshots) will be saved under ./reports/<file_hash> directory.
 * Added option to record video from guest VM ('--record output.webm').
