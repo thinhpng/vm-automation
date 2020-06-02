@@ -1,8 +1,7 @@
+import datetime
 import logging
 import re
 import subprocess
-import datetime
-
 
 if __name__ == "__main__":
     print('This script only contains functions and cannot be called directly. See "demo_cli.py" for usage example.')
@@ -99,6 +98,10 @@ def vm_start(vm, ui='gui'):
     :param ui: Start virtual machine with or without GUI.
     :return: returncode, stdout, stderr.
     """
+    if ui == '0':
+        ui = 'headless'
+    elif ui == '1':
+        ui = 'gui'
     ui = ui.lower()
     logging.info(f'Starting VM "{vm}".')
     if ui not in ['gui', 'sdl', 'headless', 'separate']:
@@ -116,7 +119,7 @@ def vm_stop(vm, ignore_status_error=0):
     """Stop virtual machine
 
     :param vm: Virtual machine name.
-    :param ignore_status_error: If errors should be ignored.
+    :param ignore_status_error: Option to ignore errors when they are expected to happen.
     :return: returncode, stdout, stderr.
     """
     logging.info(f'Stopping VM "{vm}".')
@@ -124,7 +127,7 @@ def vm_stop(vm, ignore_status_error=0):
     if result[0] == 0:
         logging.debug('VM stopped.')
     else:
-        if 'is not currently running' in result[2] and ignore_status_error:
+        if 'is not currently running' in result[2] or 'Invalid machine state: PoweredOff' in result[2] and ignore_status_error:
             logging.debug(f'VM already stopped: {result[2]}')
         else:
             logging.error(f'Error while stopping VM: {result[2]}')
@@ -199,11 +202,12 @@ def vm_backup(vm):
     return result[0], result[1], result[2]
 
 
-def vm_snapshot_restore(vm, snapshot):
+def vm_snapshot_restore(vm, snapshot, ignore_status_error=0):
     """Restore snapshot for virtual machine
 
     :param vm: Virtual machine name.
     :param snapshot: Snapshot name.
+    :param ignore_status_error: Option to ignore errors when they are expected to happen.
     :return: returncode, stdout, stderr.
     """
     if snapshot == 'restorecurrent':
@@ -219,7 +223,10 @@ def vm_snapshot_restore(vm, snapshot):
         if result[0] == 0:
             logging.debug(f'VM "{vm}" restored to snapshot "{snapshot}".')
         else:
-            logging.error(f'Error while restoring VM "{vm}" to snapshot "{snapshot}": {result[2]}.')
+            if 'Could not find a snapshot' in result[2] and ignore_status_error:
+                logging.debug(f'VM "{vm}" does not have snapshot "{snapshot}": {result[2]}.')
+            else:
+                logging.error(f'Error while restoring VM "{vm}" to snapshot "{snapshot}": {result[2]}.')
     return result[0], result[1], result[2]
 
 
@@ -288,7 +295,8 @@ def vm_exec(vm, username, password, remote_file, uac_parent='C:\\Windows\\Explor
     :return: returncode, stdout, stderr.
     """
     logging.info(f'{vm}: Executing file "{remote_file}" with parent "{uac_parent}" on VM "{vm}".')
-    result = vboxmanage(f'guestcontrol {vm} --username {username} --password {password} start {uac_parent} {remote_file}')
+    result = vboxmanage(
+        f'guestcontrol {vm} --username {username} --password {password} start {uac_parent} {remote_file}')
 
     if result[0] == 0:
         logging.debug('File executed successfully.')

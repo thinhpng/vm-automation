@@ -23,6 +23,7 @@ python demo_cli.py \
     --snapshots firefox chrome ie \
     --vboxmanage /usr/bin/vboxmanage \
     --timeout 60 \
+    --delay 10 \
     --threads 2 \
     --verbosity info \
     --log vm_automation.log \
@@ -46,7 +47,7 @@ python demo_cli.py \
 * You need a recent version of Python (3.7+).
 
 # Guest configuration
-* You must have Windows as the guest OS with autologin configured (or have a snapshot with a user logged in).
+* You must have Windows as the guest OS with auto login configured (or have a snapshot with a user logged in).
 * You must have VirtualBox guest additions installed.
 * It is strongly recommended to have live snapshots to restore to (otherwise it will be *much* slower).
 * VM disk encryption is *not* supported (VBoxManage limitation).
@@ -67,10 +68,16 @@ python demo_cli.py \
 * Better tests coverage.
 
 # Changelog
+Version 0.9.2:
+* Added option '--delay' to control delay before/after starting VMs. Depends on hardware performance.
+* Added md5 checksum calculation.
+* Updated html report generation logic.
+* Additional check to make sure that number of thread <= number of VMs.
+
 Version 0.9.1:
-* Small cleanups.
 * Added check for original file at the end of analysis.
 * Added more data to html report.
+* Small cleanups.
 
 Version 0.9:
 * Added option to generate html report ('--report'). Result (including screenshots) will be saved under ./reports/<file_hash> directory.
@@ -160,7 +167,7 @@ Version 0.1:
 * First public release.
 
 # Example videos
-* Windows host (version 0.7.2):
+* Windows host (version 0.9.2):
 
 <a href="http://www.youtube.com/watch?feature=player_embedded&v=t6AWew06rxo" target="_blank"><img src="http://img.youtube.com/vi/t6AWew06rxo/0.jpg" width="320" height="240" border="10" /></a>
 
