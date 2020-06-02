@@ -1,10 +1,10 @@
+import datetime
 import hashlib
 import logging
 import os
 import random
 import re
 import string
-import datetime
 
 if __name__ == "__main__":
     print('This script only contains functions and cannot be called directly. See "demo_cli.py" for usage example.')
@@ -12,15 +12,18 @@ if __name__ == "__main__":
 
 
 def file_hash(file):
-    file_hash_ = hashlib.sha256()
+    file_hash_sha256 = hashlib.sha256()
+    file_hash_md5 = hashlib.md5()
     block_size = 65536
     with open(file, 'rb') as f:
         fb = f.read(block_size)
         while len(fb) > 0:
-            file_hash_.update(fb)
+            file_hash_sha256.update(fb)
+            file_hash_md5.update(fb)
             fb = f.read(block_size)
-    sha256sum = file_hash_.hexdigest()
-    return sha256sum
+    sha256 = file_hash_sha256.hexdigest()
+    md5 = file_hash_md5.hexdigest()
+    return sha256, md5
 
 
 def file_size(file):
@@ -40,13 +43,15 @@ def file_info(file):
         return 1
 
     # Print hash and links
-    checksum = file_hash(file)
+    sha256 = file_hash(file)[0]
+    md5 = file_hash(file)[1]
     size = file_size(file)
-    logging.info(f'Sha256 hash: {checksum}')
+    logging.info(f'SHA256 hash: {sha256}')
+    logging.info(f'MD5 hash: {md5}')
     logging.info(f'Size: {size} Kb')
-    logging.info(f'Search VT: https://www.virustotal.com/gui/file/{checksum}/detection')
-    logging.info(f'Search Google: https://www.google.com/search?q={checksum}\n')
-    return 0, checksum, size
+    logging.info(f'VirusTotal search: https://www.virustotal.com/gui/file/{sha256}/detection')
+    logging.info(f'Google search: https://www.google.com/search?q={sha256}\n')
+    return 0, sha256, md5, size
 
 
 def randomize_filename(login, file, destination_folder):
@@ -72,7 +77,8 @@ def randomize_filename(login, file, destination_folder):
     return random_filename
 
 
-def html_report(vms_list, snapshots_list, filename, file_size, sha256, timeout, vm_network_state, reports_directory='reports'):
+def html_report(vm, snapshot, filename, file_size, sha256, md5, timeout, vm_network_state,
+                reports_directory='reports'):
     # Set options and paths
     now = datetime.datetime.now()
     time = now.strftime("%Y-%m-%d %H:%M:%S")
@@ -99,8 +105,12 @@ def html_report(vms_list, snapshots_list, filename, file_size, sha256, timeout, 
         <td>{file_size} Kb</td>
       </tr>
       <tr>
-        <td><b>Sha256 hash:</b></td>
+        <td><b>SHA256 hash:</b></td>
         <td>{sha256}</td>
+      </tr>
+      <tr>
+        <td><b>MD5 hash:</b></td>
+        <td>{md5}</td>
       </tr>
       <tr>    
         <td><b>Scanned on:</b></td>
@@ -118,21 +128,21 @@ def html_report(vms_list, snapshots_list, filename, file_size, sha256, timeout, 
     <br>
     '''
 
-    html_template_screenshots = ''
-    for vm in vms_list:
-        for snapshot in snapshots_list:
-            html_template_screenshots += f'''<h3>VM:</b> {vm}, <b>Snapshot:</b> {snapshot}<h3>'''
-            screenshots = os.listdir(destination_dir)
-            for screenshot in screenshots:
-                # Check if filename matches task name and have .png extension
-                if re.search(rf'{vm}_{snapshot}_\d+\.png', screenshot):
-                    html_template_screenshots += f'''
-                    <a href="{screenshot}" target=_blank><img src="{screenshot}" width="320" high="240"></img></a>
-                    '''
+    # Search for screenshots in reports directory
+    screenshots = os.listdir(destination_dir)
 
-    html_template_footer = '</body></html>'
+    html_template_screenshots = f'''<h3>VM:</b> {vm}, <b>Snapshot:</b> {snapshot}<h3>'''
+    for screenshot in screenshots:
+        # Check if filename matches task name and have .png extension
+        if re.search(rf'{vm}_{snapshot}_\d+\.png', screenshot):
+            html_template_screenshots += f'''
+                <a href="{screenshot}" target=_blank><img src="{screenshot}" width="320" high="240"></img></a>
+                '''
 
     # Write data to report file
-    file_object = open(destination_file, 'w')
-    file_object.write(html_template_header + html_template_screenshots + html_template_footer)
-
+    file_object = open(destination_file, mode='a', encoding='utf-8')
+    # If file is empty, write html header first
+    if os.path.getsize(destination_file) == 0:
+        file_object.write(html_template_header)
+    # Write screenshots block
+    file_object.write(html_template_screenshots)
