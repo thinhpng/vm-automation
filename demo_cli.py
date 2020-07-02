@@ -97,7 +97,6 @@ vm_pre_exec = args.pre
 vm_post_exec = args.post
 vm_login = args.login
 vm_password = args.password
-keep_filename = args.keep_filename
 remote_folder = args.remote_folder
 uac_parent = args.uac_parent
 vm_network_state = args.network
