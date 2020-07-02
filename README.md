@@ -1,43 +1,64 @@
 # VirtualBox VM automation in Python
-Python script that can be used to automate testing of software/scripts/etc on VMs (currently only VirtualBox is supported). Based on VBoxManage command-line interface and does not require VirtualBox SDK.
+Python script that can be used to automate dynamic testing of binaries/scripts/documents on VMs (currently only VirtualBox is supported).
+Based on VBoxManage command-line interface and does not require VirtualBox SDK.
 
-Both Windows and Linux are supported as host OS.
+Both Windows and Linux are tested as host OS. May work on other platforms, supported by VirtualBox and Python.
 
 # Downloads
-Stable versions are available in [Releases](https://github.com/Pernat1y/vm-automation/releases)
+Stable versions are available in [Releases](https://github.com/Pernat1y/vm-automation/releases).
 
 # Usage:
-Essential commands (command-line interface):
+Essential commands:
 ```
 python demo_cli.py \
-    putty.exe \
+    file.exe \
     --vms windows10 windows8 windows7 \
-    --snapshots firefox chrome edge
+    --snapshots firefox chrome ie
 ```
 
-All options (command-line interface):
+All options (AKA --help):
 ```
-python demo_cli.py \
-    putty.exe \ 
-    --vms windows10 windows8 windows7 \
-    --snapshots firefox chrome ie \
-    --vboxmanage /usr/bin/vboxmanage \
-    --timeout 60 \
-    --delay 10 \
-    --threads 2 \
-    --verbosity info \
-    --log vm_automation.log \
-    --report 1 \
-    --ui gui \
-    --login user \
-    --password 12345678 \
-    --remote_folder desktop \
-    --uac_parent 'C:\\Windows\\Explorer.exe' \
-    --network keep \
-    --record C:\\video.webm \
-    --resolution '1920 1080 32' \
-    --pre 'C:\start.cmd' \
-    --post 'C:\stop.cmd'
+Required options:
+  file                  Path to file
+  --vms [VMS [VMS ...]], -v [VMS [VMS ...]]
+                        Space-separated list of VMs to use
+  --snapshots [SNAPSHOTS [SNAPSHOTS ...]], -s [SNAPSHOTS [SNAPSHOTS ...]]
+                        Space-separated list of snapshots to use
+
+Main options:
+  --vboxmanage [VBOXMANAGE]
+                        Path to vboxmanage binary (default: vboxmanage)
+  --timeout [TIMEOUT]   Timeout in seconds for both commands and VM (default: 60)
+  --delay [DELAY]       Delay in seconds before/after starting VMs (default: 7)
+  --threads [{0,1,2,3,4,5,6,7,8}]
+                        Number of concurrent threads to run (0=number of VMs, default: 2)
+  --verbosity [{debug,info,error,off}]
+                        Log verbosity level (default: info)
+  --debug               Print all messages. Alias for "--verbosity debug" (default: False)
+  --log [LOG]           Path to log file (default: None) (to console)
+  --report              Generate html report (default: False)
+  --record              Record guest' OS screen (default: False)
+  --pcap                Enable recording of VM's traffic (default: False)
+
+Guests options:
+  --ui [{1,0,gui,headless}]
+                        Start VMs in GUI or headless mode (default: gui)
+  --login [LOGIN], --user [LOGIN]
+                        Login for guest OS (default: user)
+  --password [PASSWORD]
+                        Password for guest OS (default: 12345678)
+  --remote_folder [{desktop,downloads,documents,temp}]
+                        Destination folder in guest OS to place file. (default: desktop)
+  --uac_parent [UAC_PARENT]
+                        Path for parent app, which will start main file (default: C:\Windows\Explorer.exe)
+  --network [{on,off}]  State of network adapter of guest OS (default: None)
+  --resolution [RESOLUTION]
+                        Screen resolution for guest OS. Can be set to "random" (default: None)
+  --mac [MAC]           Set MAC address for guest OS. Can be set to "random" (default: None)
+  --get_file [GET_FILE]
+                        Get specific file from guest OS before stopping VM (default: None)
+  --pre [PRE]           Script to run before main file (default: None)
+  --post [POST]         Script to run after main file (default: None)
 ```
 
 # Host configuration
@@ -53,6 +74,7 @@ python demo_cli.py \
 * VM disk encryption is *not* supported (VBoxManage limitation).
 
 # TODO (version 1.0):
+* Small improvements.
 * Code optimization and fixes.
 * Better tests coverage.
 
@@ -68,6 +90,16 @@ python demo_cli.py \
 * Better tests coverage.
 
 # Changelog
+Version 0.10:
+* Added option to dump all VM's network traffic to the file ('--pcap'). File will be saved as {vm_name}_{snapshot}.pcap.
+* Added option '--get_file' to download file (memory dumps, logs, reports, etc) before stopping VM.
+* Removed option 'keep' for all of the arguments. Omitting argument will do the same.
+* Added function vm_set_mac(vm, mac) and option to change MAC address for VM before start.
+Can be set to specific MAC ('--mac 80AABBCCDDEE'), 'new' for random mac in VirtualBox range or 'random' for random one.
+* Logs levels tweaked to make default output more clean.
+* Added argument '--debug' (alias for '--verbosity debug').
+* Added standalone Windows binary. See releases section for download.
+
 Version 0.9.2:
 * Added option '--delay' to control delay before/after starting VMs. Depends on hardware performance.
 * Added md5 checksum calculation.
@@ -118,7 +150,7 @@ Version 0.7.1:
 Version 0.7:
 * Added option to control number of concurrently running tasks ('--threads 2'). Set to '0' to set to number of VMs.
 * Added option to control log verbosity ('--verbosity debug|info|error').
-* Added parameter ignore_status_error to vm_stop() function. Can be used when trying to stop already stopped VM. Disabled by default.
+* Added parameter ignore_status_error to vm_stop() function. May be used when trying to stop already stopped VM.
 * Added aliases for vm_copyto() and vm_copyfrom() functions - vm_upload() and vm_download().
 * Fixed command line arguments processing.
 * Added unittests for some of the functions ('tests/test.py').
@@ -175,7 +207,12 @@ Version 0.1:
 
 <a href="http://www.youtube.com/watch?feature=player_embedded&v=QnXfmPVbmlo" target="_blank"><img src="http://img.youtube.com/vi/QnXfmPVbmlo/0.jpg" width="320" height="240" border="10" /></a>
 
+# Useful links
+<a href="https://github.com/hfiref0x/VBoxHardenedLoader" target="_blank">VirtualBox Hardened VM detection mitigation loader - VBoxHardenedLoader</a>
+
 # Donations
 You can support further development with a donation (Thanks!).
 
-BTC: bc1qstm95hfx26sf89h62xt804cfzg48z5qxe6cff63ff3s5d2f8f8nq3jf3u4
+BTC (Legacy): 1GDy6seYwiK92XAyoQsSeMf2LMR9pCpkY8
+
+BTC (SegWit bech32): bc1q5wzj6qa3d7vtw9cehftt7gvswr60kgfgeu98z6

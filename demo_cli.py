@@ -1,11 +1,10 @@
 import argparse
 import logging
 import os
-import random
 import threading
 import time
 
-script_version = '0.9.2'
+script_version = '0.10'
 
 try:
     import support_functions
@@ -33,12 +32,18 @@ main_options.add_argument('--delay', default=7, type=int, nargs='?',
                           help='Delay in seconds before/after starting VMs (default: %(default)s)')
 main_options.add_argument('--threads', default=2, choices=range(9), type=int, nargs='?',
                           help='Number of concurrent threads to run (0=number of VMs, default: %(default)s)')
-main_options.add_argument('--verbosity', default='info', choices=['debug', 'info', 'error'], type=str, nargs='?',
+main_options.add_argument('--verbosity', default='info', choices=['debug', 'info', 'error', 'off'], type=str, nargs='?',
                           help='Log verbosity level (default: %(default)s)')
-main_options.add_argument('--log', default='console', type=str, nargs='?',
-                          help='Path to log file (default: %(default)s)')
-main_options.add_argument('--report', default=0, choices=[0, 1], type=int, nargs='?',
-                          help='Enable/disable saving report as html (default: %(default)s)')
+main_options.add_argument('--debug', action='store_true',
+                          help='Print all messages. Alias for "--verbosity debug" (default: %(default)s)')
+main_options.add_argument('--log', default=None, type=argparse.FileType('w'), nargs='?',
+                          help='Path to log file (default: %(default)s) (console)')
+main_options.add_argument('--report', action='store_true',
+                          help='Generate html report (default: %(default)s)')
+main_options.add_argument('--record', action='store_true',
+                          help='Record guest\' OS screen (default: %(default)s)')
+main_options.add_argument('--pcap', action='store_true',
+                          help='Enable recording of VM\'s traffic (default: %(default)s)')
 
 guests_options = parser.add_argument_group('Guests options')
 guests_options.add_argument('--ui', default='gui', choices=['1', '0', 'gui', 'headless'], nargs='?',
@@ -52,12 +57,15 @@ guests_options.add_argument('--remote_folder', default='desktop', choices=['desk
                             help='Destination folder in guest OS to place file. (default: %(default)s)')
 guests_options.add_argument('--uac_parent', default='C:\\Windows\\Explorer.exe', type=str,
                             nargs='?', help='Path for parent app, which will start main file (default: %(default)s)')
-guests_options.add_argument('--network', default='keep', choices=['on', 'off', 'keep'], nargs='?',
-                            help='State of guest OS network (default: %(default)s)')
-guests_options.add_argument('--resolution', default='1024 768 32', type=str, nargs='?',
+guests_options.add_argument('--network', default=None, choices=['on', 'off'], nargs='?',
+                            help='State of network adapter of guest OS (default: %(default)s)')
+guests_options.add_argument('--resolution', default=None, type=str, nargs='?',
                             help='Screen resolution for guest OS. Can be set to "random" (default: %(default)s)')
-guests_options.add_argument('--record', default='off', type=str, nargs='?',
-                            help='Record full video of runtime on guest OS (default: %(default)s)')
+guests_options.add_argument('--mac', default=None, type=str, nargs='?',
+                            help='Set MAC address for guest OS. Can be set to "random" (default: %(default)s)')
+guests_options.add_argument('--get_file', default=None, type=str, nargs='?',
+                            help='Get specific file from guest OS before stopping VM (default: %(default)s)')
+
 guests_options.add_argument('--pre', default=None, type=str, nargs='?',
                             help='Script to run before main file (default: %(default)s)')
 guests_options.add_argument('--post', default=None, type=str, nargs='?',
@@ -73,8 +81,11 @@ threads = args.threads
 timeout = args.timeout
 delay = args.delay
 verbosity = args.verbosity
+debug = args.debug
 log = args.log
 report = args.report
+record = args.record
+pcap = args.pcap
 
 # vm_functions options
 vm_functions.vboxmanage_path = args.vboxmanage
@@ -90,10 +101,16 @@ remote_folder = args.remote_folder
 uac_parent = args.uac_parent
 vm_network_state = args.network
 vm_resolution = args.resolution
+vm_mac = args.mac
+vm_get_file = args.get_file
 
+# Some VirtualBox commands require full path to file
+cwd = os.getcwd()
 
 # Logging options
-if log == 'none':
+if debug:
+    verbosity = 'debug'
+if log == 'off':
     logging.disable()
 elif verbosity in ['error', 'info', 'debug']:
     log_levels = {'error': logging.ERROR,
@@ -147,20 +164,29 @@ def main_routine(vm, snapshots_list):
         if report:
             os.makedirs(f'reports/{sha256}', mode=0o444, exist_ok=True)
 
-        # Stop VM, restore snapshot, start VM
+        # Stop VM, restore snapshot. Optionally, change MAC address, enable traffic dump.
         vm_functions.vm_stop(vm, ignore_status_error=1)
         time.sleep(delay / 2)
         result = vm_functions.vm_snapshot_restore(vm, snapshot, ignore_status_error=1)
-        # If we were unable to restore snapshot - continue to the next snapshot/VM
         if result[0] != 0:
+            # If we were unable to restore snapshot - continue to the next snapshot/VM
             logging.error(f'Unable to restore VM "{vm}" to snapshot "{snapshot}". Skipping.')
             vm_functions.vm_stop(vm, ignore_status_error=1)
             continue
+        if vm_mac:
+            vm_functions.vm_set_mac(vm, vm_mac)
+        if pcap:
+            if report:
+                pcap_file = f'{cwd}/reports/{sha256}/{vm}_{snapshot}.pcap'
+            else:
+                pcap_file = f'{cwd}/{vm}_{snapshot}.pcap'
+            vm_functions.vm_pcap(vm, pcap_file)
 
+        # Start VM
         time.sleep(delay / 2)
         result = vm_functions.vm_start(vm, ui)
-        # If we were unable to start VM - continue to the next one
         if result[0] != 0:
+            # If we were unable to start VM - continue to the next one
             logging.error(f'Unable to start VM "{vm}". Skipping.')
             continue
 
@@ -174,12 +200,16 @@ def main_routine(vm, snapshots_list):
             continue
 
         # Set guest resolution
-        if vm_resolution == 'random':
-            resolutions = ['1280 1024 32', '1920 1080 32', '1920 1200 32', '2560 1440 32', '3840 2160 32']
-            random_resolution = random.choice(resolutions)
-            vm_functions.vm_set_resolution(vm, random_resolution)
-        else:
-            vm_functions.vm_set_resolution(vm, vm_resolution)
+        vm_functions.vm_set_resolution(vm, vm_resolution)
+
+        # Start screen recording
+        if record:
+            if report:
+                recording_name = f'{cwd}/reports/{sha256}/{vm}_{snapshot}.webm'
+            else:
+                recording_name = f'{cwd}/{vm}_{snapshot}.webm'
+            recording_name = support_functions.normalize_path(recording_name)
+            vm_functions.vm_record(vm, recording_name)
 
         # Run pre exec script
         if vm_pre_exec:
@@ -233,12 +263,31 @@ def main_routine(vm, snapshots_list):
         else:
             logging.debug('Post exec is not set.')
 
+        # Get file from guest
+        if vm_get_file:
+            # Normalize path and extract file name
+            src_path = support_functions.normalize_path(vm_get_file)
+            src_filename = os.path.basename(src_path)
+            if report:
+                # Place in reports directory
+                dst_file = f'{cwd}/reports/{sha256}/{src_filename}'
+            else:
+                # Place in current dir
+                dst_file = f'{cwd}/{src_filename}'
+            # Download file
+            vm_functions.vm_copyfrom(vm, vm_login, vm_password, src_path, dst_file)
+
+        # Stop recording
+        if record:
+            vm_functions.vm_record_stop(vm)
+
+        # Stop VM
+        vm_functions.vm_stop(vm)
+
         # Save html report as ./reports/<file_hash>/index.html
         if report:
             support_functions.html_report(vm, snapshot, filename, file_size, sha256, md5, timeout, vm_network_state)
 
-        # Stop VM
-        vm_functions.vm_stop(vm)
         logging.info(f'{task_name}: Task finished')
 
 

@@ -7,10 +7,18 @@ import re
 import string
 
 if __name__ == "__main__":
-    print('This script only contains functions and cannot be called directly. See "demo_cli.py" for usage example.')
+    print('This script only contains functions and cannot be called directly. See demo scripts for usage examples.')
     exit(1)
 
 
+# Normalize path (replace '\' and '/' with '\\').
+def normalize_path(path):
+    path.replace('\\', '\\\\')
+    normalized_path = path.replace('/', '\\\\')
+    return normalized_path
+
+
+# Calculate file hashed (sha256 and md5)
 def file_hash(file):
     file_hash_sha256 = hashlib.sha256()
     file_hash_md5 = hashlib.md5()
@@ -26,6 +34,7 @@ def file_hash(file):
     return sha256, md5
 
 
+# Calculate file size (in KB)
 def file_size(file):
     size = os.path.getsize(file)
     size_kb = round(size / 1024)
@@ -54,6 +63,7 @@ def file_info(file):
     return 0, sha256, md5, size
 
 
+# Generate random file name
 def randomize_filename(login, file, destination_folder):
     # File name
     random_name = ''.join(random.choice(string.ascii_letters) for _ in range(random.randint(4, 20)))
@@ -77,6 +87,7 @@ def randomize_filename(login, file, destination_folder):
     return random_filename
 
 
+# Generate html report
 def html_report(vm, snapshot, filename, file_size, sha256, md5, timeout, vm_network_state,
                 reports_directory='reports'):
     # Set options and paths
