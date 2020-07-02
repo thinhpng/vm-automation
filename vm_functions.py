@@ -1,10 +1,12 @@
 import datetime
 import logging
+import random
 import re
+import secrets
 import subprocess
 
 if __name__ == "__main__":
-    print('This script only contains functions and cannot be called directly. See "demo_cli.py" for usage example.')
+    print('This script only contains functions and cannot be called directly. See demo scripts for usage examples.')
     exit(1)
 
 # Set essential options
@@ -127,7 +129,8 @@ def vm_stop(vm, ignore_status_error=0):
     if result[0] == 0:
         logging.debug('VM stopped.')
     else:
-        if 'is not currently running' in result[2] or 'Invalid machine state: PoweredOff' in result[2] and ignore_status_error:
+        if 'is not currently running' in result[2] or 'Invalid machine state: PoweredOff' in result[2] and \
+                ignore_status_error:
             logging.debug(f'VM already stopped: {result[2]}')
         else:
             logging.error(f'Error while stopping VM: {result[2]}')
@@ -246,20 +249,14 @@ def vm_snapshot_remove(vm, snapshot):
     return result[0], result[1], result[2]
 
 
-def vm_network(vm, link_state='keep'):
+def vm_network(vm, link_state):
     """Change guest OS network link state
 
     :param vm: Virtual machine name.
     :param link_state: Guest OS network link state.
     :return: returncode, stdout, stderr.
     """
-    if link_state not in ['keep', 'on', 'off']:
-        logging.info(f'Unknown link_state selected for VM {vm}. Assuming "keep".')
-        link_state = 'keep'
-    if link_state == 'keep':
-        logging.debug(f'Keeping original network state for VM "{vm}".')
-        return 0, 0, 0
-    elif link_state in ['on', 'off']:
+    if link_state in ['on', 'off']:
         logging.info(f'Setting network parameters to {link_state} for VM {vm}')
         result = vboxmanage(f'controlvm {vm} setlinkstate1 {link_state}')
         if result[0] == 0:
@@ -267,6 +264,8 @@ def vm_network(vm, link_state='keep'):
         else:
             logging.error(f'Unable to change network state for VM: {result[2]}.')
         return result[0], result[1], result[2]
+    else:
+        return 0, 0, 0
 
 
 def vm_set_resolution(vm, screen_resolution):
@@ -276,12 +275,53 @@ def vm_set_resolution(vm, screen_resolution):
     :param screen_resolution: Guest OS screen resolution (W H D).
     :return: returncode, stdout, stderr.
     """
-    logging.info(f'Changing screen resolution for VM "{vm}".')
+    if not screen_resolution:
+        return 0, 0, 0
+    if screen_resolution == 'random':
+        screen_resolution = random.choice['1024 768 32', '1280 1024 32', '1440 1080 32', '1600 1200 32', '1920 1080 32']
+    logging.debug(f'Changing screen resolution for VM "{vm}".')
     result = vboxmanage(f'controlvm {vm} setvideomodehint {screen_resolution}')
     if result[0] == 0:
         logging.debug('Screen resolution changed.')
     else:
         logging.error(f'Unable to change screen resolution: {result[2]}')
+    return result[0], result[1], result[2]
+
+
+def vm_set_mac(vm, mac):
+    """Change MAC address for VM
+
+    :param vm: Virtual machine name.
+    :param mac: New MAC address.
+    :return: returncode, stdout, stderr.
+    """
+    logging.debug(f'Changing MAC address for VM "{vm}".')
+    if mac == 'new':
+        # Generate new MAC in VirtualBox range (080027xxxxxx)
+        mac = f'080027{secrets.token_hex(3)}'
+    if mac == 'random':
+        # Fully random MAC
+        mac = secrets.token_hex(6)
+    result = vboxmanage(f'modifyvm {vm} --macaddress1 {mac}')
+    if result[0] == 0:
+        logging.debug('MAC changed.')
+    else:
+        logging.error(f'Unable to change MAC address: {result[2]}')
+    return result[0], result[1], result[2]
+
+
+def vm_pcap(vm, file):
+    """Dump all VM's network traffic to a file
+
+    :param vm: Virtual machine name.
+    :param file: Output file (pcap format).
+    :return: returncode, stdout, stderr.
+    """
+    result = vboxmanage(f'modifyvm {vm} --nictrace1 on --nictracefile1 {file}')
+    if result[0] == 0:
+        logging.debug(f'Saving network traffic from VM "{vm}" as {file}.')
+    else:
+        logging.error(f'Unable to update VM settings to capture traffic: {result[2]}')
     return result[0], result[1], result[2]
 
 
@@ -292,12 +332,12 @@ def vm_exec(vm, username, password, remote_file, uac_parent='C:\\Windows\\Explor
     :param username: Guest OS username (login).
     :param password: Guest OS password.
     :param remote_file: Path to file on guest OS.
+    :param uac_parent: Parent application that will start/open main file.
     :return: returncode, stdout, stderr.
     """
     logging.info(f'{vm}: Executing file "{remote_file}" with parent "{uac_parent}" on VM "{vm}".')
     result = vboxmanage(
         f'guestcontrol {vm} --username {username} --password {password} start {uac_parent} {remote_file}')
-
     if result[0] == 0:
         logging.debug('File executed successfully.')
     else:
@@ -314,7 +354,7 @@ def vm_file_stat(vm, username, password, remote_file):
     :param remote_file: Path to file on guest OS.
     :return: returncode, stdout, stderr.
     """
-    logging.info(f'Checking if file "{remote_file}" exist on VM "{vm}".')
+    logging.debug(f'Checking if file "{remote_file}" exist on VM "{vm}".')
     result = vboxmanage(f'guestcontrol {vm} --username {username} --password {password} stat {remote_file}')
     if result[0] == 0:
         logging.debug('File exist.')
@@ -358,7 +398,7 @@ def vm_upload(vm, username, password, local_file, remote_file):
     return result[0], result[1], result[2]
 
 
-def vm_copyfrom(vm, username, password, local_file, remote_file):
+def vm_copyfrom(vm, username, password, remote_file, local_file):
     """Download file from virtual machine
 
     :param vm: Virtual machine name.
@@ -379,7 +419,7 @@ def vm_copyfrom(vm, username, password, local_file, remote_file):
 
 
 # Alias to vm_copyfrom()
-def vm_download(vm, username, password, local_file, remote_file):
+def vm_download(vm, username, password, remote_file, local_file):
     """Download file from virtual machine
 
     :param vm: Virtual machine name.
@@ -410,7 +450,7 @@ def vm_screenshot(vm, screenshot_name):
 
 
 def vm_record(vm, filename, screens='all', fps=10, duration=0):
-    '''Start screen recording on VM
+    """Start screen recording on VM
 
     :param vm: Virtual machine name.
     :param filename: Name of file to save video as.
@@ -418,7 +458,7 @@ def vm_record(vm, filename, screens='all', fps=10, duration=0):
     :param fps: Frames per second.
     :param duration: Record duration.
     :return:
-    '''
+    """
     logging.info(f'Recording video as "{filename}" on VM "{vm}".')
     result = vboxmanage(f'controlvm {vm} recording screens {screens}')
     if result[0] != 0:
@@ -442,11 +482,11 @@ def vm_record(vm, filename, screens='all', fps=10, duration=0):
 
 
 def vm_record_stop(vm):
-    '''Stop screen recording on VM
+    """Stop screen recording on VM
 
     :param vm: Virtual machine name.
     :return:
-    '''
+    """
     logging.info(f'Stopping recording on VM "{vm}".')
     result = vboxmanage(f'controlvm {vm} recording off')
     if result[0] == 0:
