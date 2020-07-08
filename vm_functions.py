@@ -325,6 +325,21 @@ def vm_pcap(vm, file):
     return result[0], result[1], result[2]
 
 
+def vm_mem_dump(vm, file):
+    """Dump VM memory to a file
+
+    :param vm: Virtual machine name.
+    :param file: Output file.
+    :return: returncode, stdout, stderr.
+    """
+    result = vboxmanage(f'debugvm {vm} dumpvmcore --filename={file}')
+    if result[0] == 0:
+        logging.debug(f'Dumping memory of VM "{vm}" as {file}.')
+    else:
+        logging.error(f'Unable to dump VM memory: {result[2]}')
+    return result[0], result[1], result[2]
+
+
 def vm_exec(vm, username, password, remote_file, uac_parent='C:\\Windows\\Explorer.exe'):
     """Execute file/command on guest OS
 
