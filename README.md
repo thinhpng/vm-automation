@@ -90,6 +90,11 @@ Guests options:
 * Better tests coverage.
 
 # Changelog
+Version 0.10.1:
+* Added function vm_functions.vm_memdump() and option to dump VM memory (--memdump).
+This may take some time and disk space.
+* Added script to build Windows binary using [Nuitka](https://nuitka.net/). See 'scripts' folder.
+
 Version 0.10:
 * Added option to dump all VM's network traffic to the file ('--pcap'). File will be saved as {vm_name}_{snapshot}.pcap.
 * Added option '--get_file' to download file (memory dumps, logs, reports, etc) before stopping VM.
