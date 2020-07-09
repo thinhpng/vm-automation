@@ -4,7 +4,7 @@ import os
 import threading
 import time
 
-script_version = '0.10'
+script_version = '0.10.1'
 
 try:
     import support_functions
@@ -44,6 +44,8 @@ main_options.add_argument('--record', action='store_true',
                           help='Record guest\' OS screen (default: %(default)s)')
 main_options.add_argument('--pcap', action='store_true',
                           help='Enable recording of VM\'s traffic (default: %(default)s)')
+main_options.add_argument('--memdump', action='store_true',
+                          help='Dump memory VM (default: %(default)s)')
 
 guests_options = parser.add_argument_group('Guests options')
 guests_options.add_argument('--ui', default='gui', choices=['1', '0', 'gui', 'headless'], nargs='?',
@@ -86,6 +88,7 @@ log = args.log
 report = args.report
 record = args.record
 pcap = args.pcap
+memdump = args.memdump
 
 # vm_functions options
 vm_functions.vboxmanage_path = args.vboxmanage
@@ -164,7 +167,7 @@ def main_routine(vm, snapshots_list):
         if report:
             os.makedirs(f'reports/{sha256}', mode=0o444, exist_ok=True)
 
-        # Stop VM, restore snapshot. Optionally, change MAC address, enable traffic dump.
+        # Stop VM, restore snapshot
         vm_functions.vm_stop(vm, ignore_status_error=1)
         time.sleep(delay / 2)
         result = vm_functions.vm_snapshot_restore(vm, snapshot, ignore_status_error=1)
@@ -173,9 +176,13 @@ def main_routine(vm, snapshots_list):
             logging.error(f'Unable to restore VM "{vm}" to snapshot "{snapshot}". Skipping.')
             vm_functions.vm_stop(vm, ignore_status_error=1)
             continue
+        # Change MAC address
         if vm_mac:
             vm_functions.vm_set_mac(vm, vm_mac)
+        # Dump traffic
         if pcap:
+            if vm_network_state == 'off':
+                logging.warning('Traffic dump enabled, but network state is set to \'off\'.')
             if report:
                 pcap_file = f'{cwd}/reports/{sha256}/{vm}_{snapshot}.pcap'
             else:
@@ -280,6 +287,14 @@ def main_routine(vm, snapshots_list):
         # Stop recording
         if record:
             vm_functions.vm_record_stop(vm)
+
+        # Dump VM memory
+        if memdump:
+            if report:
+                memdump_file = f'{cwd}/reports/{sha256}/{vm}_{snapshot}.dmp'
+            else:
+                memdump_file = f'{cwd}/{vm}_{snapshot}.dmp'
+            vm_functions.vm_memdump(vm, memdump_file)
 
         # Stop VM
         vm_functions.vm_stop(vm)

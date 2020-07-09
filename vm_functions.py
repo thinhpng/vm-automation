@@ -325,7 +325,7 @@ def vm_pcap(vm, file):
     return result[0], result[1], result[2]
 
 
-def vm_mem_dump(vm, file):
+def vm_memdump(vm, file):
     """Dump VM memory to a file
 
     :param vm: Virtual machine name.
