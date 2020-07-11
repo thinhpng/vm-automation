@@ -28,6 +28,7 @@ Required options:
 Main options:
   --vboxmanage [VBOXMANAGE]
                         Path to vboxmanage binary (default: vboxmanage)
+  --check_version       Check for latest VirtualBox version online (default: False)
   --timeout [TIMEOUT]   Timeout in seconds for both commands and VM (default: 60)
   --delay [DELAY]       Delay in seconds before/after starting VMs (default: 7)
   --threads [{0,1,2,3,4,5,6,7,8}]
@@ -35,10 +36,11 @@ Main options:
   --verbosity [{debug,info,error,off}]
                         Log verbosity level (default: info)
   --debug               Print all messages. Alias for "--verbosity debug" (default: False)
-  --log [LOG]           Path to log file (default: None) (to console)
+  --log [LOG]           Path to log file (default: None) (console)
   --report              Generate html report (default: False)
   --record              Record guest' OS screen (default: False)
   --pcap                Enable recording of VM's traffic (default: False)
+  --memdump             Dump memory VM (default: False)
 
 Guests options:
   --ui [{1,0,gui,headless}]
@@ -90,6 +92,11 @@ Guests options:
 * Better tests coverage.
 
 # Changelog
+Version 0.10.2:
+* Added option to check VirtualBox version online (--check_version). Will warn if outdated version is used.
+Windows binary does not have this option.
+* Fixed '--log' option.
+
 Version 0.10.1:
 * Added function vm_functions.vm_memdump() and option to dump VM memory (--memdump).
 This may take some time and disk space.

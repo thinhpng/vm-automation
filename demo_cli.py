@@ -3,8 +3,9 @@ import logging
 import os
 import threading
 import time
+import http.client
 
-script_version = '0.10.1'
+script_version = '0.10.2'
 
 try:
     import support_functions
@@ -26,6 +27,8 @@ required_options.add_argument('--snapshots', '-s', type=str, nargs='*', required
 main_options = parser.add_argument_group('Main options')
 main_options.add_argument('--vboxmanage', default='vboxmanage', type=str, nargs='?',
                           help='Path to vboxmanage binary (default: %(default)s)')
+main_options.add_argument('--check_version', action='store_true',
+                          help='Check for latest VirtualBox version online (default: %(default)s)')
 main_options.add_argument('--timeout', default=60, type=int, nargs='?',
                           help='Timeout in seconds for both commands and VM (default: %(default)s)')
 main_options.add_argument('--delay', default=7, type=int, nargs='?',
@@ -36,7 +39,7 @@ main_options.add_argument('--verbosity', default='info', choices=['debug', 'info
                           help='Log verbosity level (default: %(default)s)')
 main_options.add_argument('--debug', action='store_true',
                           help='Print all messages. Alias for "--verbosity debug" (default: %(default)s)')
-main_options.add_argument('--log', default=None, type=argparse.FileType('w'), nargs='?',
+main_options.add_argument('--log', default=None, type=str, nargs='?',
                           help='Path to log file (default: %(default)s) (console)')
 main_options.add_argument('--report', action='store_true',
                           help='Generate html report (default: %(default)s)')
@@ -67,7 +70,6 @@ guests_options.add_argument('--mac', default=None, type=str, nargs='?',
                             help='Set MAC address for guest OS. Can be set to "random" (default: %(default)s)')
 guests_options.add_argument('--get_file', default=None, type=str, nargs='?',
                             help='Get specific file from guest OS before stopping VM (default: %(default)s)')
-
 guests_options.add_argument('--pre', default=None, type=str, nargs='?',
                             help='Script to run before main file (default: %(default)s)')
 guests_options.add_argument('--post', default=None, type=str, nargs='?',
@@ -92,6 +94,7 @@ memdump = args.memdump
 
 # vm_functions options
 vm_functions.vboxmanage_path = args.vboxmanage
+check_version = args.check_version
 ui = args.ui
 vm_functions.timeout = timeout
 
@@ -130,7 +133,23 @@ elif verbosity in ['error', 'info', 'debug']:
 # Show general info
 def show_info():
     logging.info(f'Script version: {script_version}')
-    logging.info(f'VirtualBox version: {vm_functions.virtualbox_version(strip_newline=1)[1]}\n')
+
+    vbox_version = vm_functions.virtualbox_version(strip_newline=1, strip_build=1)[1]
+    logging.info(f'VirtualBox version: {vbox_version}\n')
+
+    # Check for VirtualBox version
+    if check_version:
+        conn = http.client.HTTPSConnection("download.virtualbox.org")
+        conn.request("GET", "/virtualbox/LATEST-STABLE.TXT")
+        r1 = conn.getresponse()
+        if r1.status == 200:
+            latest_version = r1.read().rstrip().decode("utf-8")
+            if latest_version == vbox_version:
+                logging.debug('Using latest VirtualBox version.')
+            else:
+                logging.info(f'New version of VirtualBox available: {latest_version}.')
+        else:
+            logging.warning('Unable to check for VirtualBox version.')
 
     logging.info(f'VMs: {vms_list}')
     logging.info(f'Snapshots: {snapshots_list}\n')
