@@ -33,17 +33,20 @@ def vboxmanage(cmd, timeout=timeout):
         exit(1)
 
 
-def virtualbox_version(strip_newline=0):
+def virtualbox_version(strip_newline=1, strip_build=0):
     """Return VirtualBox version
 
-    :param strip_newline: Strip new line from stdout.
+    :param strip_newline: Strip new line.
+    :param strip_build: Strip build number.
     :return: returncode, stdout, stderr.
     """
     result = vboxmanage('--version')
+    version = result[1]
     if strip_newline:
-        return result[0], result[1].rstrip(), result[2]
-    else:
-        return result[0], result[1], result[2]
+        version = version.rstrip()
+    if strip_build:
+        version = re.findall(r'^(\d+(?:\.\d+)*)', version)[0]
+    return result[0], version, result[2]
 
 
 def list_vms(list=1, dictionary=0):
