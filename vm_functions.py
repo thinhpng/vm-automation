@@ -343,6 +343,20 @@ def vm_memdump(vm, file):
     return result[0], result[1], result[2]
 
 
+def vm_disable_time_sync(vm):
+    """Disable host-guest time sync for VM
+
+    :param vm: Virtual machine name.
+    :return: returncode, stdout, stderr.
+    """
+    result = vboxmanage(f'setextradata {vm} "VBoxInternal/Devices/VMMDev/0/Config/GetHostTimeDisabled" "1"')
+    if result[0] == 0:
+        logging.debug(f'Time sync disabled for VM "{vm}".')
+    else:
+        logging.error(f'Unable to disable time sync for VM: {result[2]}')
+    return result[0], result[1], result[2]
+
+
 def vm_exec(vm, username, password, remote_file, uac_parent='C:\\Windows\\Explorer.exe'):
     """Execute file/command on guest OS
 
