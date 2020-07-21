@@ -1,3 +1,15 @@
+# Contents
+* [VirtualBox VM automation in Python](#virtualbox-vm-automation-in-python)
+* [Downloads](#downloads)
+* [Usage](#usage)
+* [Host configuration](#host-configuration)
+* [Guest configuration](#guest-configuration)
+* [TODO (version 1.0):](#todo-version-10)
+* [TODO (version 2.0):](#todo-version-20)
+* [Example videos](#example-videos)
+* [Useful links](#useful-links)
+* [Donations](#donations)
+
 # VirtualBox VM automation in Python
 Python script that can be used to automate dynamic testing of binaries/scripts/documents on VMs (currently only VirtualBox is supported).
 Based on VBoxManage command-line interface and does not require VirtualBox SDK.
