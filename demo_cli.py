@@ -5,7 +5,7 @@ import threading
 import time
 import http.client
 
-script_version = '0.10.2'
+script_version = '0.10.3'
 
 try:
     import support_functions
@@ -15,7 +15,8 @@ except ModuleNotFoundError:
     exit(1)
 
 # Parse command line arguments
-parser = argparse.ArgumentParser(prog='vm-automation')
+parser = argparse.ArgumentParser(prog='vm-automation', description='VirtualBox VM automation. ' +
+                                                                   'Web: https://github.com/Pernat1y/vm-automation')
 
 required_options = parser.add_argument_group('Required options')
 required_options.add_argument('file', type=str, nargs='+', help='Path to file')
@@ -47,8 +48,9 @@ main_options.add_argument('--record', action='store_true',
                           help='Record guest\' OS screen (default: %(default)s)')
 main_options.add_argument('--pcap', action='store_true',
                           help='Enable recording of VM\'s traffic (default: %(default)s)')
-main_options.add_argument('--memdump', action='store_true',
-                          help='Dump memory VM (default: %(default)s)')
+main_options.add_argument('--memdump', action='store_true', help='Dump memory VM (default: %(default)s)')
+main_options.add_argument('--no_time_sync', action='store_true',
+                          help='Disable host-guest time sync for VM (default: %(default)s)')
 
 guests_options = parser.add_argument_group('Guests options')
 guests_options.add_argument('--ui', default='gui', choices=['1', '0', 'gui', 'headless'], nargs='?',
@@ -91,6 +93,7 @@ report = args.report
 record = args.record
 pcap = args.pcap
 memdump = args.memdump
+no_time_sync = args.no_time_sync
 
 # vm_functions options
 vm_functions.vboxmanage_path = args.vboxmanage
@@ -198,6 +201,9 @@ def main_routine(vm, snapshots_list):
         # Change MAC address
         if vm_mac:
             vm_functions.vm_set_mac(vm, vm_mac)
+        # Disable time sync
+        if no_time_sync:
+            vm_functions.vm_disable_time_sync(vm)
         # Dump traffic
         if pcap:
             if vm_network_state == 'off':
