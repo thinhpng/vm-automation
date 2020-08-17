@@ -17,7 +17,7 @@ Based on VBoxManage command-line interface and does not require VirtualBox SDK.
 Both Windows and Linux are tested as host OS. May work on other platforms, supported by VirtualBox and Python.
 
 # Downloads
-Latest stable version and Windows binaries are available in <a href="/releases" target="_blank">Releases</a>.
+Latest stable version and Windows binaries are available in <a href="https://github.com/Pernat1y/vm-automation/releases" target="_blank">Releases</a>.
 
 # Usage:
 Essential commands:
