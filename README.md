@@ -1,5 +1,5 @@
-# Contents
-* [VirtualBox VM automation in Python](#virtualbox-vm-automation-in-python)
+# Content
+* [VirtualBox VM automation in Python](#about)
 * [Downloads](#downloads)
 * [Usage](#usage)
 * [Host configuration](#host-configuration)
@@ -10,14 +10,14 @@
 * [Useful links](#useful-links)
 * [Donations](#donations)
 
-# VirtualBox VM automation in Python
+# About
 Python script that can be used to automate dynamic testing of binaries/scripts/documents on VMs (currently only VirtualBox is supported).
 Based on VBoxManage command-line interface and does not require VirtualBox SDK.
 
 Both Windows and Linux are tested as host OS. May work on other platforms, supported by VirtualBox and Python.
 
 # Downloads
-Stable versions are available in [Releases](https://github.com/Pernat1y/vm-automation/releases).
+Latest stable version and Windows binaries are available in <a href="/releases" target="_blank">Releases</a>.
 
 # Usage:
 Essential commands:
@@ -117,7 +117,10 @@ Guests options:
 <a href="https://github.com/hfiref0x/VBoxHardenedLoader" target="_blank">VirtualBox Hardened VM detection mitigation loader - VBoxHardenedLoader</a>
 
 # Changelog
-See CHANGELOG.md
+Version 0.10.3:
+* Added function vm_functions.vm_disable_time_sync() and option to disable host-guest time sync ('--no_time_sync').
+
+For complete changelog see <a href="CHANGELOG.md" target="_blank">CHANGELOG.md</a>
 
 # Donations
 You can support further development with a donation (Thanks!).
