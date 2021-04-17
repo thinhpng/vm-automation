@@ -34,7 +34,7 @@ def file_hash(file):
     return sha256, md5
 
 
-# Calculate file size (in KB)
+# Calculate file size (KB)
 def file_size(file):
     size = os.path.getsize(file)
     size_kb = round(size / 1024)
@@ -88,7 +88,7 @@ def randomize_filename(login, file, destination_folder):
 
 
 # Generate html report
-def html_report(vm, snapshot, filename, file_size, sha256, md5, timeout, vm_network_state,
+def html_report(vm, snapshot, filename, file_args, file_size, sha256, md5, timeout, vm_network_state,
                 reports_directory='reports'):
     # Set options and paths
     now = datetime.datetime.now()
@@ -112,12 +112,16 @@ def html_report(vm, snapshot, filename, file_size, sha256, md5, timeout, vm_netw
         <td>{filename}</td>
       </tr>
       <tr>
+        <td><b>File args:</b></td>
+        <td>{file_args}</td>
+      </tr>
+      <tr>
         <td><b>File size:</b></td>
         <td>{file_size} Kb</td>
       </tr>
       <tr>
         <td><b>SHA256 hash:</b></td>
-        <td>{sha256}</td>
+        <td>{sha256} (<a href="https://www.virustotal.com/gui/search/{sha256}" target=_blank>VT Search</a>)</td>
       </tr>
       <tr>
         <td><b>MD5 hash:</b></td>
@@ -134,6 +138,14 @@ def html_report(vm, snapshot, filename, file_size, sha256, md5, timeout, vm_netw
       <tr>    
         <td><b>Network:</b></td>
         <td>{vm_network_state}</td>
+      </tr>
+      <tr>    
+        <td><b>Downloads:</b></td>
+        <td>
+        <a href=./{sha256}/{vm}{snapshot}.webm target=_blank>Screen recording</a>, 
+        <a href=./{sha256}/{vm}{snapshot}.pcap target=_blank>Traffic dump</a>, 
+        <a href=./{sha256}/{vm}{snapshot}.dmp target=_blank>Memory dump</a>
+        </td>
       </tr>
     </table>
     <br>

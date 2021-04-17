@@ -5,7 +5,7 @@ import threading
 import time
 import http.client
 
-script_version = '0.10.3'
+script_version = '0.11'
 
 try:
     import support_functions
@@ -15,8 +15,8 @@ except ModuleNotFoundError:
     exit(1)
 
 # Parse command line arguments
-parser = argparse.ArgumentParser(prog='vm-automation', description='VirtualBox VM automation. ' +
-                                                                   'Web: https://github.com/Pernat1y/vm-automation')
+parser = argparse.ArgumentParser(prog='vm-automation', description=f'''VirtualBox VM automation {script_version};
+                                                                   https://github.com/Pernat1y/vm-automation''')
 
 required_options = parser.add_argument_group('Required options')
 required_options.add_argument('file', type=str, nargs='+', help='Path to file')
@@ -45,14 +45,14 @@ main_options.add_argument('--log', default=None, type=str, nargs='?',
 main_options.add_argument('--report', action='store_true',
                           help='Generate html report (default: %(default)s)')
 main_options.add_argument('--record', action='store_true',
-                          help='Record guest\' OS screen (default: %(default)s)')
+                          help='Record video of guest\' screen (default: %(default)s)')
 main_options.add_argument('--pcap', action='store_true',
                           help='Enable recording of VM\'s traffic (default: %(default)s)')
 main_options.add_argument('--memdump', action='store_true', help='Dump memory VM (default: %(default)s)')
 main_options.add_argument('--no_time_sync', action='store_true',
                           help='Disable host-guest time sync for VM (default: %(default)s)')
 
-guests_options = parser.add_argument_group('Guests options')
+guests_options = parser.add_argument_group('VM options')
 guests_options.add_argument('--ui', default='gui', choices=['1', '0', 'gui', 'headless'], nargs='?',
                             help='Start VMs in GUI or headless mode (default: %(default)s)')
 guests_options.add_argument('--login', '--user', default='user', type=str, nargs='?',
@@ -62,8 +62,10 @@ guests_options.add_argument('--password', default='12345678', type=str, nargs='?
 guests_options.add_argument('--remote_folder', default='desktop', choices=['desktop', 'downloads', 'documents', 'temp'],
                             type=str, nargs='?',
                             help='Destination folder in guest OS to place file. (default: %(default)s)')
-guests_options.add_argument('--uac_parent', default='C:\\Windows\\Explorer.exe', type=str,
-                            nargs='?', help='Path for parent app, which will start main file (default: %(default)s)')
+guests_options.add_argument('--open_with', default='%windir%\\explorer.exe', type=str,
+                            nargs='?', help='Absolute path to app, which will open main file (default: %(default)s)')
+guests_options.add_argument('--file_args', default=None, type=str, nargs='?',
+                            help='Argument to pass to the main file/executable (default: %(default)s)')
 guests_options.add_argument('--network', default=None, choices=['on', 'off'], nargs='?',
                             help='State of network adapter of guest OS (default: %(default)s)')
 guests_options.add_argument('--resolution', default=None, type=str, nargs='?',
@@ -107,7 +109,8 @@ vm_post_exec = args.post
 vm_login = args.login
 vm_password = args.password
 remote_folder = args.remote_folder
-uac_parent = args.uac_parent
+open_with = args.open_with
+file_args = args.file_args
 vm_network_state = args.network
 vm_resolution = args.resolution
 vm_mac = args.mac
@@ -142,6 +145,7 @@ def show_info():
 
     # Check for VirtualBox version
     if check_version:
+        print(f'Script version: {script_version}')
         conn = http.client.HTTPSConnection("download.virtualbox.org")
         conn.request("GET", "/virtualbox/LATEST-STABLE.TXT")
         r1 = conn.getresponse()
@@ -220,6 +224,7 @@ def main_routine(vm, snapshots_list):
         if result[0] != 0:
             # If we were unable to start VM - continue to the next one
             logging.error(f'Unable to start VM "{vm}". Skipping.')
+            vm_functions.vm_stop(vm, ignore_status_error=1)
             continue
 
         # Wait for VM
@@ -245,7 +250,7 @@ def main_routine(vm, snapshots_list):
 
         # Run pre exec script
         if vm_pre_exec:
-            vm_functions.vm_exec(vm, vm_login, vm_password, vm_pre_exec, uac_parent=uac_parent)
+            vm_functions.vm_exec(vm, vm_login, vm_password, vm_pre_exec, open_with=open_with, file_args=file_args)
             take_screenshot(vm, task_name)
         else:
             logging.debug('Pre exec is not set.')
@@ -269,19 +274,18 @@ def main_routine(vm, snapshots_list):
         take_screenshot(vm, task_name)
 
         # Run file
-        result = vm_functions.vm_exec(vm, vm_login, vm_password, remote_file_path, uac_parent=uac_parent)
+        result = vm_functions.vm_exec(vm, vm_login, vm_password, remote_file_path, open_with=open_with,
+                                      file_args=file_args)
         if result[0] != 0:
             take_screenshot(vm, task_name)
             vm_functions.vm_stop(vm)
             continue
         take_screenshot(vm, task_name)
 
-        logging.debug(f'Waiting for {timeout / 2} seconds...')
-        time.sleep(timeout / 2)
-        take_screenshot(vm, task_name)
-        logging.debug(f'Waiting for {timeout / 2} seconds...')
-        time.sleep(timeout / 2)
-        take_screenshot(vm, task_name)
+        for _ in range(2):
+            logging.debug(f'Waiting for {timeout / 2} seconds...')
+            time.sleep(timeout / 2)
+            take_screenshot(vm, task_name)
 
         # Check for file at the end of task
         result = vm_functions.vm_file_stat(vm, vm_login, vm_password, remote_file_path)
@@ -290,7 +294,7 @@ def main_routine(vm, snapshots_list):
 
         # Run post exec script
         if vm_post_exec:
-            vm_functions.vm_exec(vm, vm_login, vm_password, vm_post_exec, uac_parent=uac_parent)
+            vm_functions.vm_exec(vm, vm_login, vm_password, vm_post_exec, open_with=open_with)
             take_screenshot(vm, task_name)
         else:
             logging.debug('Post exec is not set.')
@@ -326,7 +330,8 @@ def main_routine(vm, snapshots_list):
 
         # Save html report as ./reports/<file_hash>/index.html
         if report:
-            support_functions.html_report(vm, snapshot, filename, file_size, sha256, md5, timeout, vm_network_state)
+            support_functions.html_report(vm, snapshot, filename, file_args, file_size, sha256, md5, timeout,
+                                          vm_network_state)
 
         logging.info(f'{task_name}: Task finished')
 
