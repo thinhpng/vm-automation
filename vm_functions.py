@@ -263,7 +263,7 @@ def vm_network(vm, link_state):
         logging.info(f'Setting network parameters to {link_state} for VM {vm}')
         result = vboxmanage(f'controlvm {vm} setlinkstate1 {link_state}')
         if result[0] == 0:
-            logging.debug(f'Network state changed.')
+            logging.debug(f'Network state set.')
         else:
             logging.error(f'Unable to change network state for VM: {result[2]}.')
         return result[0], result[1], result[2]
@@ -357,19 +357,24 @@ def vm_disable_time_sync(vm):
     return result[0], result[1], result[2]
 
 
-def vm_exec(vm, username, password, remote_file, uac_parent='C:\\Windows\\Explorer.exe'):
+def vm_exec(vm, username, password, remote_file, open_with='%windir%\\explorer.exe', file_args=None):
     """Execute file/command on guest OS
 
     :param vm: Virtual machine name.
     :param username: Guest OS username (login).
     :param password: Guest OS password.
     :param remote_file: Path to file on guest OS.
-    :param uac_parent: Parent application that will start/open main file.
+    :param open_with: Parent application that will start/open main file.
+    :param file_args: Optional arguments
     :return: returncode, stdout, stderr.
     """
-    logging.info(f'{vm}: Executing file "{remote_file}" with parent "{uac_parent}" on VM "{vm}".')
-    result = vboxmanage(
-        f'guestcontrol {vm} --username {username} --password {password} start {uac_parent} {remote_file}')
+    logging.info(f'{vm}: Executing file "{remote_file}" with parent "{open_with}" on VM "{vm}".')
+    if file_args:
+        cmd = f'guestcontrol {vm} --username {username} --password {password} start {open_with} {remote_file} {file_args}'
+    else:
+        cmd = f'guestcontrol {vm} --username {username} --password {password} start {open_with} {remote_file}'
+
+    result = vboxmanage(cmd)
     if result[0] == 0:
         logging.debug('File executed successfully.')
     else:
@@ -481,35 +486,51 @@ def vm_screenshot(vm, screenshot_name):
     return result[0], result[1], result[2]
 
 
-def vm_record(vm, filename, screens='all', fps=10, duration=0):
+def vm_record(vm, filename, screens='all', fps=10, videorate=512, duration=0):
     """Start screen recording on VM
 
     :param vm: Virtual machine name.
-    :param filename: Name of file to save video as.
+    :param filename: Name of file to save video as (.webm).
     :param screens: Screens to record.
-    :param fps: Frames per second.
-    :param duration: Record duration.
+    :param fps: Frames per second (1-30).
+    :param videorate: Bitrate, kbps (122-1228).
+    :param duration: Record duration, seconds.
     :return:
     """
     logging.info(f'Recording video as "{filename}" on VM "{vm}".')
     result = vboxmanage(f'controlvm {vm} recording screens {screens}')
     if result[0] != 0:
         return result[0], result[1], result[2]
+
     result = vboxmanage(f'controlvm {vm} recording filename {filename}')
     if result[0] != 0:
         return result[0], result[1], result[2]
-    result = vboxmanage(f'controlvm {vm} recording videofps {fps}')
-    if result[0] != 0:
-        return result[0], result[1], result[2]
+
+    if 1 <= fps <= 30:
+        result = vboxmanage(f'controlvm {vm} recording videofps {fps}')
+        if result[0] != 0:
+            return result[0], result[1], result[2]
+
+    # result = vboxmanage(f'controlvm {vm} recording videores {videores}')
+    # if result[0] != 0:
+    #     return result[0], result[1], result[2]
+
+    if 122 <= videorate <= 1228:
+        result = vboxmanage(f'controlvm {vm} recording videorate {videorate}')
+        if result[0] != 0:
+            return result[0], result[1], result[2]
+
     if duration > 0:
         result = vboxmanage(f'controlvm {vm} recording maxtime {duration}')
         if result[0] != 0:
             return result[0], result[1], result[2]
+
     result = vboxmanage(f'controlvm {vm} recording on')
     if result[0] == 0:
         logging.debug('Recording started.')
     else:
         logging.error(f'Error while recording video: {result[2]}')
+
     return result[0], result[1], result[2]
 
 

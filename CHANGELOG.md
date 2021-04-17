@@ -1,4 +1,10 @@
 # Changelog
+Version 0.11:
+* Added '--file_args' option to pass an argument to the main file/executable.
+* '--uac_parent' option renamed to '--open_with' as it may be used with any type of files, not only the executables.
+* Updated vm_record() - added new options and updated defaults.
+* Small improvements in html report.
+
 Version 0.10.3:
 * Added function vm_functions.vm_disable_time_sync() and option to disable host-guest time sync ('--no_time_sync').
 
@@ -111,11 +117,9 @@ Version 0.3:
 * Added option to enable/disable network for guest OS.
 * Added option to start scripts before/after running the main file.
 * Added option to change the display resolution.
-* Code refactoring.
 
 Version 0.2:
 * Added parallel execution of multiple VMs.
-* Code refactoring.
 
 Version 0.1:
 * First public release.
