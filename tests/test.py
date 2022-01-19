@@ -2,7 +2,7 @@ import support_functions
 import vm_functions
 import unittest
 
-version_good = "6.1.26r145957"
+version_good = "6.1.32r149290"
 vm_good = "ws2019"
 vm_bad = "bad"
 snapshot_good = "live"
