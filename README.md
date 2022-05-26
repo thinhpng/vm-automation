@@ -4,8 +4,7 @@
 * [Usage](#usage)
 * [Host configuration](#host-configuration)
 * [Guest configuration](#guest-configuration)
-* [TODO (1.0)](#todo-10)
-* [TODO (2.0)](#todo-20)
+* [TODO](#todo)
 * [Example videos](#example-videos)
 * [Useful links](#useful-links)
 * [Donations](#donations)
@@ -91,18 +90,8 @@ VM options:
 * It is strongly recommended to have live snapshots to restore to (otherwise it will be *much* slower).
 * VM disk encryption is *not* supported (VBoxManage limitation).
 
-# TODO (1.0):
+# TODO:
 * Small improvements.
-* Code optimization and fixes.
-
-# TODO (2.0):
-* Use VirtualBox API.
-* Distribute workload to multiple physical hosts.
-* Implement web interface.
-* Add option to use pre-running VMs.
-* Add global progress status.
-* Vagrant integration (maybe).
-* VMware support (maybe).
 * Code optimization and fixes.
 * Better tests coverage.
 
@@ -128,7 +117,5 @@ Version 0.11:
 For complete changelog see <a href="CHANGELOG.md" target="_blank">CHANGELOG.md</a>
 
 # Donations
-You can support further development with a donation (Thanks!).
-* BTC: bc1q5wzj6qa3d7vtw9cehftt7gvswr60kgfgeu98z6
-* BTC (Legacy): 1GDy6seYwiK92XAyoQsSeMf2LMR9pCpkY8
+See https://github.com/Pernat1y/Pernat1y
 
